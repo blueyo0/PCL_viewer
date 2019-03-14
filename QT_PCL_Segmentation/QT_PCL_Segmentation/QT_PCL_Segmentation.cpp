@@ -32,6 +32,7 @@ void QT_PCL_Segmentation::initialVtkWidget()
 	ui.qvtkWidget->update();
 }
 
+//onOpen
 void QT_PCL_Segmentation::onOpen()
 {
 	QString fileName = QFileDialog::getOpenFileName(this,
