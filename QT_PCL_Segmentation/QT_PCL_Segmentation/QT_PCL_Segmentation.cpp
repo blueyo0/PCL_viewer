@@ -70,6 +70,7 @@ void QT_PCL_Segmentation::onOpen()
 	}
 }
 
+//showDemo
 void QT_PCL_Segmentation::showDemo()
 {
 	QMessageBox msg;
