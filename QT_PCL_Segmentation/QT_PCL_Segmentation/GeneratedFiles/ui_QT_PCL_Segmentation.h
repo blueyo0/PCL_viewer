@@ -32,6 +32,7 @@ public:
     QLabel *label;
     QPushButton *showButton;
     QVTKWidget *qvtkWidget;
+    QPushButton *segButton;
     QMenuBar *menuBar;
     QMenu *menufile;
     QToolBar *mainToolBar;
@@ -51,10 +52,13 @@ public:
         label->setGeometry(QRect(660, 10, 251, 331));
         showButton = new QPushButton(centralWidget);
         showButton->setObjectName(QStringLiteral("showButton"));
-        showButton->setGeometry(QRect(740, 420, 75, 23));
+        showButton->setGeometry(QRect(670, 440, 75, 23));
         qvtkWidget = new QVTKWidget(centralWidget);
         qvtkWidget->setObjectName(QStringLiteral("qvtkWidget"));
         qvtkWidget->setGeometry(QRect(10, 10, 631, 531));
+        segButton = new QPushButton(centralWidget);
+        segButton->setObjectName(QStringLiteral("segButton"));
+        segButton->setGeometry(QRect(780, 440, 101, 23));
         QT_PCL_SegmentationClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(QT_PCL_SegmentationClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
@@ -83,6 +87,7 @@ public:
         actionopen->setText(QApplication::translate("QT_PCL_SegmentationClass", "open", nullptr));
         label->setText(QApplication::translate("QT_PCL_SegmentationClass", "TextLabel", nullptr));
         showButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "show", nullptr));
+        segButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "segmentation", nullptr));
         menufile->setTitle(QApplication::translate("QT_PCL_SegmentationClass", "file", nullptr));
     } // retranslateUi
 

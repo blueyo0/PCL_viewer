@@ -19,6 +19,7 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	//连接信号和槽
 	connect(ui.showButton, SIGNAL(clicked()), this, SLOT(showPCL()));
 	connect(ui.actionopen, SIGNAL(triggered()), this, SLOT(onOpen()));
+	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(segmentation()));
 }
 
 void QT_PCL_Segmentation::initialVtkWidget()
@@ -89,26 +90,91 @@ void QT_PCL_Segmentation::showPCL()
 	cloud->height = 1;
 	cloud->points.resize(cloud->width * cloud->height);
 
+	pcl::PointXYZ center(0, 0, 0);
+
 	// Generate the data
 	for (size_t i = 0; i < cloud->points.size(); ++i)
 	{
-		cloud->points[i].x = 1024 * rand() / (RAND_MAX + 1.0f);
-		cloud->points[i].y = 1024 * rand() / (RAND_MAX + 1.0f);
+		cloud->points[i].x = 10 * rand() / (RAND_MAX + 1.0f);
+		cloud->points[i].y = 10 * rand() / (RAND_MAX + 1.0f);
 		cloud->points[i].z = 1.0;
+		center.x += cloud->points[i].x;
+		center.y += cloud->points[i].y;
+		center.z += cloud->points[i].z;
 	}
+	center.z += 6;
+	center.x /= cloud->points.size();
+	center.y /= cloud->points.size();
+	center.z /= cloud->points.size();
 
 	// Set a few outliers
-	cloud->points[0].z = 2.0;
-	cloud->points[3].z = -2.0;
-	cloud->points[6].z = 4.0;
+	cloud->points[0].z = 3.0;
+	cloud->points[3].z = 1.0;
+	cloud->points[6].z = 2.0;
 
 	QString text = "Point cloud data: "+QString::number(cloud->points.size())+" points\n";
 	for (size_t i = 0; i < cloud->points.size(); ++i)
-		text += "     " + QString::number(cloud->points[i].x) + " "
-						+ QString::number(cloud->points[i].y) + " "
-						+ QString::number(cloud->points[i].z) + " \n";
+		text += "       " + QString::number(cloud->points[i].x, 'f', 2) + "  "
+						  + QString::number(cloud->points[i].y, 'f', 2) + "  "
+						  + QString::number(cloud->points[i].z, 'f', 2) + "  \n";
+	
+	text += "\ncenter:" + QString::number(center.x, 'f', 2) + "  "
+					  + QString::number(center.y, 'f', 2) + "  "
+				   	  + QString::number(center.z, 'f', 2) + "  \n";
 
 	ui.label->setText(text);
+}
+
+void QT_PCL_Segmentation::segmentation()
+{
+	pcl::IndicesPtr indices(new std::vector <int>);
+	pcl::PassThrough<pcl::PointXYZ> pass;
+	pass.setInputCloud(cloud);
+	pass.setFilterFieldName("z");
+	pass.setFilterLimits(0.0, 1.0);
+	pass.filter(*indices);
+
+	pcl::MinCutSegmentation<pcl::PointXYZ> seg;
+	seg.setInputCloud(cloud);
+	seg.setIndices(indices);
+
+	//中心点设置
+	pcl::PointCloud<pcl::PointXYZ>::Ptr foreground_points(new pcl::PointCloud<pcl::PointXYZ>());
+	pcl::PointXYZ point = L1median(cloud);
+	//pcl::PointXYZ point;
+	point.x = 68.97;
+	point.y = -18.55;
+	point.z = 0.57;
 	
-	
+	foreground_points->points.push_back(point);
+	seg.setForegroundPoints(foreground_points);
+	//分块参数
+	seg.setSigma(0.25);
+	seg.setRadius(3.0433856);
+	seg.setNumberOfNeighbours(14);
+	seg.setSourceWeight(0.8);
+
+	std::vector <pcl::PointIndices> clusters;
+	seg.extract(clusters);
+	pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud = seg.getColoredCloud();
+
+	viewer->updatePointCloud(colored_cloud, "colored_cloud");
+	viewer->addPointCloud(colored_cloud, "colored_cloud");
+	ui.qvtkWidget->update();
+}
+
+pcl::PointXYZ QT_PCL_Segmentation::L1median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud)
+{
+	pcl::PointXYZ center(0, 0, 0);
+	// Generate the data
+	for (size_t i = 0; i < inCloud->points.size(); ++i)
+	{
+		center.x += inCloud->points[i].x;
+		center.y += inCloud->points[i].y;
+		center.z += inCloud->points[i].z;
+	}
+	center.x /= inCloud->points.size();
+	center.y /= inCloud->points.size();
+	center.z /= inCloud->points.size();
+	return center;
 }
