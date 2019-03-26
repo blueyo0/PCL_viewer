@@ -19,7 +19,7 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	//连接信号和槽
 	connect(ui.showButton, SIGNAL(clicked()), this, SLOT(showPCL()));
 	connect(ui.actionopen, SIGNAL(triggered()), this, SLOT(onOpen()));
-	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(segmentation()));
+	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(colorAxis()));
 }
 
 void QT_PCL_Segmentation::initialVtkWidget()
@@ -65,22 +65,18 @@ void QT_PCL_Segmentation::onOpen()
 				pcl::PCDReader reader;
 				reader.read<pcl::PointXYZ>(fileName.toStdString(), *cloud);
 			}
-			viewer->updatePointCloud(cloud, "cloud");
-			viewer->addPointCloud(cloud, "cloud");
-			viewer->resetCamera();
-			ui.qvtkWidget->update();
-			//initialVtkWidget(); 
 		}
 		else//PCD read 
 		{
 			pcl::PLYReader yrd;
 			yrd.read<pcl::PointXYZ>(fileName.toStdString(), *cloud);
-			viewer->updatePointCloud(cloud, "cloud");
-			viewer->addPointCloud(cloud, "cloud");
-			viewer->resetCamera();
-			ui.qvtkWidget->update();
-			//pcl::io::loadPLYFile(fileName.toStdString(), *cloud);
 		}
+		viewer->setBackgroundColor(0.1, 0.1, 0.1);
+		//pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> single_color(cloud, 0, 255, 0);
+		viewer->updatePointCloud(cloud, "cloud");
+		viewer->addPointCloud(cloud, "cloud");
+		viewer->resetCamera();
+		ui.qvtkWidget->update();
 	}
 }
 
@@ -152,7 +148,7 @@ void QT_PCL_Segmentation::segmentation()
 
 	//中心点设置
 	pcl::PointCloud<pcl::PointXYZ>::Ptr foreground_points(new pcl::PointCloud<pcl::PointXYZ>());
-	pcl::PointXYZ point = L1median(cloud);
+	pcl::PointXYZ point = median(cloud);
 	//pcl::PointXYZ point;
 	//point.x = 68.97;
 	//point.y = -18.55;
@@ -175,7 +171,30 @@ void QT_PCL_Segmentation::segmentation()
 	ui.qvtkWidget->update();
 }
 
-pcl::PointXYZ QT_PCL_Segmentation::L1median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud)
+void QT_PCL_Segmentation::colorAxis()
+{
+	pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud(new pcl::PointCloud <pcl::PointXYZRGB>);
+	//pcl::visualization::PCLVisualizer::Ptr rgbVis(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr colored_cloud);
+	for (size_t i = 0; i < cloud->points.size(); ++i)
+	{
+		pcl::PointXYZRGB  pt;
+		pt.x = this->cloud->points[i].x;
+		pt.y = this->cloud->points[i].y;
+		pt.z = this->cloud->points[i].z;
+		pt.r = 255;
+		pt.g = 0;
+		pt.b = 0;
+		colored_cloud->push_back(pt);
+	}
+
+	//pcl::visualization::PointCloudColorHandlerRGB<pcl::PointXYZRGB> rgb(point_cloud_ptr);
+	viewer->updatePointCloud<pcl::PointXYZRGB>(colored_cloud, "colored_cloud");
+	viewer->addPointCloud<pcl::PointXYZRGB>(colored_cloud,"colored_cloud");
+	ui.qvtkWidget->update();
+}
+
+
+pcl::PointXYZ QT_PCL_Segmentation::median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud)
 {
 	pcl::PointXYZ center(0, 0, 0);
 	// Generate the data

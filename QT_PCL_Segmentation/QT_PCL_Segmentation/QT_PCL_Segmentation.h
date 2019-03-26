@@ -5,6 +5,7 @@
 
 #include <vector>
 
+#include <pcl/common/projection_matrix.h>
 #include <pcl/ModelCoefficients.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/ply_io.h>
@@ -16,7 +17,6 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/segmentation/min_cut_segmentation.h>
-
 
 class QT_PCL_Segmentation : public QMainWindow
 {
@@ -32,7 +32,7 @@ private:
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
 
 	void initialVtkWidget();
-	pcl::PointXYZ L1median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
+	pcl::PointXYZ median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
 
 
 private slots:
@@ -40,4 +40,5 @@ private slots:
 	void showPCL();
 	void onOpen();
 	void segmentation();
+	void colorAxis();
 };

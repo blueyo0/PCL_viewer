@@ -21,8 +21,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_QT_PCL_Segmentation_t {
-    QByteArrayData data[6];
-    char stringdata0[58];
+    QByteArrayData data[7];
+    char stringdata0[68];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -36,11 +36,12 @@ QT_MOC_LITERAL(1, 20, 8), // "showDemo"
 QT_MOC_LITERAL(2, 29, 0), // ""
 QT_MOC_LITERAL(3, 30, 7), // "showPCL"
 QT_MOC_LITERAL(4, 38, 6), // "onOpen"
-QT_MOC_LITERAL(5, 45, 12) // "segmentation"
+QT_MOC_LITERAL(5, 45, 12), // "segmentation"
+QT_MOC_LITERAL(6, 58, 9) // "colorAxis"
 
     },
     "QT_PCL_Segmentation\0showDemo\0\0showPCL\0"
-    "onOpen\0segmentation"
+    "onOpen\0segmentation\0colorAxis"
 };
 #undef QT_MOC_LITERAL
 
@@ -50,7 +51,7 @@ static const uint qt_meta_data_QT_PCL_Segmentation[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-       4,   14, // methods
+       5,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -58,12 +59,14 @@ static const uint qt_meta_data_QT_PCL_Segmentation[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    0,   34,    2, 0x08 /* Private */,
-       3,    0,   35,    2, 0x08 /* Private */,
-       4,    0,   36,    2, 0x08 /* Private */,
-       5,    0,   37,    2, 0x08 /* Private */,
+       1,    0,   39,    2, 0x08 /* Private */,
+       3,    0,   40,    2, 0x08 /* Private */,
+       4,    0,   41,    2, 0x08 /* Private */,
+       5,    0,   42,    2, 0x08 /* Private */,
+       6,    0,   43,    2, 0x08 /* Private */,
 
  // slots: parameters
+    QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
@@ -82,6 +85,7 @@ void QT_PCL_Segmentation::qt_static_metacall(QObject *_o, QMetaObject::Call _c, 
         case 1: _t->showPCL(); break;
         case 2: _t->onOpen(); break;
         case 3: _t->segmentation(); break;
+        case 4: _t->colorAxis(); break;
         default: ;
         }
     }
@@ -113,13 +117,13 @@ int QT_PCL_Segmentation::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 4)
+        if (_id < 5)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 4;
+        _id -= 5;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 4)
+        if (_id < 5)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 4;
+        _id -= 5;
     }
     return _id;
 }
