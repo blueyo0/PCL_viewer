@@ -18,6 +18,7 @@
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QStatusBar>
+#include <QtWidgets/QTextEdit>
 #include <QtWidgets/QToolBar>
 #include <QtWidgets/QWidget>
 #include "QVTKWidget.h"
@@ -33,6 +34,9 @@ public:
     QPushButton *showButton;
     QVTKWidget *qvtkWidget;
     QPushButton *segButton;
+    QPushButton *drawButton;
+    QTextEdit *InfoText;
+    QLabel *label_2;
     QMenuBar *menuBar;
     QMenu *menufile;
     QToolBar *mainToolBar;
@@ -58,7 +62,16 @@ public:
         qvtkWidget->setGeometry(QRect(0, 0, 1341, 911));
         segButton = new QPushButton(centralWidget);
         segButton->setObjectName(QStringLiteral("segButton"));
-        segButton->setGeometry(QRect(1450, 390, 91, 61));
+        segButton->setGeometry(QRect(1440, 390, 71, 61));
+        drawButton = new QPushButton(centralWidget);
+        drawButton->setObjectName(QStringLiteral("drawButton"));
+        drawButton->setGeometry(QRect(1520, 390, 71, 61));
+        InfoText = new QTextEdit(centralWidget);
+        InfoText->setObjectName(QStringLiteral("InfoText"));
+        InfoText->setGeometry(QRect(1360, 630, 251, 241));
+        label_2 = new QLabel(centralWidget);
+        label_2->setObjectName(QStringLiteral("label_2"));
+        label_2->setGeometry(QRect(1360, 600, 111, 31));
         QT_PCL_SegmentationClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(QT_PCL_SegmentationClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
@@ -87,7 +100,9 @@ public:
         actionopen->setText(QApplication::translate("QT_PCL_SegmentationClass", "open", nullptr));
         label->setText(QApplication::translate("QT_PCL_SegmentationClass", "TextLabel", nullptr));
         showButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "show", nullptr));
-        segButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "segmentation", nullptr));
+        segButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "Kmeans", nullptr));
+        drawButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "drawLine", nullptr));
+        label_2->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">\344\277\241\346\201\257\346\240\217</span></p></body></html>", nullptr));
         menufile->setTitle(QApplication::translate("QT_PCL_SegmentationClass", "file", nullptr));
     } // retranslateUi
 

@@ -9,6 +9,17 @@ VTK_MODULE_INIT(vtkInteractionStyle)
 #include <vtkRenderWindow.h>
 #include <vtkPolyDataMapper.h>
 
+#include <vector>
+#include <string>
+
+#include<time.h>
+#include<stdlib.h>
+
+typedef struct RGB {
+	int r;
+	int g;
+	int b;
+}RGB;
 
 QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	: QMainWindow(parent)
@@ -16,12 +27,14 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	ui.setupUi(this);
 	//初始化
 	initialVtkWidget();
-	viewer->setBackgroundColor(255, 255, 255);
+	viewer->setBackgroundColor(255, 255, 255);	
 	colorFlag = false;
 	//连接信号和槽
 	connect(ui.showButton, SIGNAL(clicked()), this, SLOT(showPCL()));
 	connect(ui.actionopen, SIGNAL(triggered()), this, SLOT(onOpen()));
-	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(colorAxis()));
+	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(kmeans()));
+	//connect(ui.segButton, SIGNAL(clicked()), this, SLOT(showDemo()));
+	connect(ui.drawButton, SIGNAL(clicked()), this, SLOT(drawLine()));
 }
 
 void QT_PCL_Segmentation::initialVtkWidget()
@@ -73,19 +86,21 @@ void QT_PCL_Segmentation::onOpen()
 			pcl::PLYReader yrd;
 			yrd.read<pcl::PointXYZ>(fileName.toStdString(), *cloud);
 		}		
+		correctCenter();
 		//pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> single_color(cloud, 0, 255, 0);
 		viewer->removePointCloud("cloud");
 		viewer->updatePointCloud(cloud, "cloud");
 		viewer->addPointCloud(cloud, "cloud");
 		viewer->resetCamera();
 		ui.qvtkWidget->update();
-		this->color(162,162,162);
+		this->color(250,140,20);
 	}
 }
 
 //showDemo
 void QT_PCL_Segmentation::showDemo()
 {
+	ui.InfoText->append("\ndemo show");
 	QMessageBox msg;
 	msg.setText("HelloWord!");
 	msg.exec();
@@ -195,6 +210,18 @@ void QT_PCL_Segmentation::colorAxis()
 	ui.qvtkWidget->update();
 }
 
+void QT_PCL_Segmentation::correctCenter()
+{
+	pcl::PointXYZ center(median(cloud));
+	for (size_t i = 0; i < cloud->points.size(); ++i)
+	{
+		cloud->points[i].x -= center.x;
+		cloud->points[i].y -= center.y;
+		cloud->points[i].z -= center.z;
+	}
+
+}
+
 void QT_PCL_Segmentation::color(int r,int g,int b)
 {
 	
@@ -233,4 +260,142 @@ pcl::PointXYZ QT_PCL_Segmentation::median(pcl::PointCloud<pcl::PointXYZ>::Ptr in
 	center.y /= inCloud->points.size();
 	center.z /= inCloud->points.size();
 	return center;
+}
+
+void QT_PCL_Segmentation::drawLine()
+{
+	/*for (int i = 0; i < 10; i++)
+	{
+		viewer->addLine(cloud->points[i], cloud->points[cloud->size() -i - 1], "line"+i);
+	}*/
+	pcl::ModelCoefficients cylinder_coeff;
+	cylinder_coeff.values.resize(7);
+	cylinder_coeff.values[0] = cloud->points[0].x;
+	cylinder_coeff.values[1] = cloud->points[0].y;
+	cylinder_coeff.values[2] = cloud->points[0].z;
+	cylinder_coeff.values[3] = cloud->points[5].x-cloud->points[0].x;
+	cylinder_coeff.values[4] = cloud->points[5].y - cloud->points[0].y;
+	cylinder_coeff.values[5] = cloud->points[5].z - cloud->points[0].z;
+	cylinder_coeff.values[6] = 0.0000002*cloud->width;
+	viewer->addCylinder(cylinder_coeff,"axisX");
+	viewer->addSphere(cloud->points[0], 0.0000006*cloud->width, 0, 135, 0, "sphere" + 0);
+	viewer->addSphere(cloud->points[5], 0.0000006*cloud->width, 0, 135, 0, "sphere" + 5);
+	/*
+	cylinder_coeff.values.resize(7);
+	cylinder_coeff.values[0] = 0;
+	cylinder_coeff.values[1] = 0;
+	cylinder_coeff.values[2] = 0;
+	cylinder_coeff.values[3] = 0;
+	cylinder_coeff.values[4] = 1;
+	cylinder_coeff.values[5] = 0;
+	cylinder_coeff.values[6] = 0.001;
+	viewer->addCylinder(cylinder_coeff, "axisY");
+
+	cylinder_coeff.values.resize(7);
+	cylinder_coeff.values[0] = 0;
+	cylinder_coeff.values[1] = 0;
+	cylinder_coeff.values[2] = 0;
+	cylinder_coeff.values[3] = 0;
+	cylinder_coeff.values[4] = 0;
+	cylinder_coeff.values[5] = 1;
+	cylinder_coeff.values[6] = 0.001;
+	viewer->addCylinder(cylinder_coeff, "axisZ");*/
+
+	ui.qvtkWidget->update();
+}
+
+//void QT_PCL_Segmentation::clustering(int num) {
+//}
+
+void QT_PCL_Segmentation::kmeans() {
+	int num = 30;
+	ui.InfoText->append("\nclustering start");
+	int avg_clusterSize = cloud->points.size()/num;
+	int avg_clusterColor = 255 / num;
+	std::vector<pcl::PointXYZ> center;
+	std::vector<RGB> clusterColor(num, {0,0,0});
+	std::vector<int> clusterSize(num,0);
+	std::vector<int> tag(cloud->points.size(),-1);
+	//初始化num个簇心
+	ui.InfoText->append("\ndefault centers choosing start");
+	for (int i = 0; i < num; ++i)
+	{
+		srand((int)time(0));
+		int centerIndex = (int)(avg_clusterSize * rand() / (RAND_MAX + 1.0)) + i * avg_clusterSize;
+		center.push_back(cloud->points[centerIndex]);
+		//tag[centerIndex] = i;
+		clusterColor[i] = { (int)(avg_clusterColor * rand() / (RAND_MAX + 1.0)) + i * avg_clusterColor,
+							255-(int)(avg_clusterColor * rand() / (RAND_MAX + 1.0)) + i * avg_clusterColor,
+							(int)(avg_clusterColor * rand() / (RAND_MAX + 1.0)) + i * avg_clusterColor };
+	}
+
+	ui.InfoText->append("\niteration start");
+	for (size_t iterTime = 0; iterTime < 5; iterTime++) 
+	{
+		//对每个点更新所属的类别： tag中存储center编号
+		for (size_t i = 0; i < cloud->points.size(); ++i)
+		{
+			int minIndex = 0;
+			int minDist = distance(center[0], cloud->points[i]);
+			//确认k个簇心中距离该点最近的
+			int iterIndex = 0;
+			for (std::vector<pcl::PointXYZ>::iterator iter = center.begin()+1; iter != center.end(); iter++)
+			{
+				iterIndex++;
+				if (distance(*iter, cloud->points[i]) < minDist)
+				{
+					minIndex = iterIndex;
+					minDist = distance(*iter, cloud->points[i]);
+				}
+			}
+			tag[i] = minIndex;
+			clusterSize[minIndex]++;
+		}
+
+		//更新center的点
+		std::fill(center.begin(), center.end(), pcl::PointXYZ(0,0,0));//center全部置为0
+		for (size_t i = 0; i < cloud->points.size(); ++i)
+		{
+			center[tag[i]].x += cloud->points[i].x;
+			center[tag[i]].y += cloud->points[i].y;
+			center[tag[i]].z += cloud->points[i].z;
+		}
+		for (size_t i = 0; i < num; i++)
+		{
+			center[i].x /= clusterSize[i];
+		}
+		ui.InfoText->append("\n update(");
+		ui.InfoText->append(QString::number(iterTime));
+		ui.InfoText->append("/100)");
+	}
+	//设置颜色点云并输出
+	ui.InfoText->append("\n colored cloud output start");
+	int sphereIndex = 0;
+	for (std::vector<pcl::PointXYZ>::iterator iter = center.begin() + 1; iter != center.end(); iter++)
+	{
+		viewer->addSphere(*iter,0.0000006*cloud->width,"sphere"+sphereIndex);
+		sphereIndex++;
+	}
+	pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud(new pcl::PointCloud <pcl::PointXYZRGB>);
+	//pcl::visualization::PCLVisualizer::Ptr rgbVis(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr colored_cloud);
+	for (size_t i = 0; i < cloud->points.size(); ++i)
+	{
+		pcl::PointXYZRGB  pt;
+		pt.x = this->cloud->points[i].x;
+		pt.y = this->cloud->points[i].y;
+		pt.z = this->cloud->points[i].z;
+		pt.r = clusterColor[tag[i]].r;
+		pt.g = clusterColor[tag[i]].g;
+		pt.b = clusterColor[tag[i]].b;
+		colored_cloud->push_back(pt);
+	}
+	viewer->removePointCloud("colored_cloud");
+	viewer->updatePointCloud<pcl::PointXYZRGB>(colored_cloud, "colored_cloud");
+	viewer->addPointCloud<pcl::PointXYZRGB>(colored_cloud, "colored_cloud");
+	ui.qvtkWidget->update();
+}
+
+double QT_PCL_Segmentation::distance(pcl::PointXYZ a, pcl::PointXYZ b) 
+{
+	return (a.x-b.x)*(a.x - b.x)+ (a.y - b.y)*(a.y - b.y)+ (a.z - b.z)*(a.z - b.z);
 }
