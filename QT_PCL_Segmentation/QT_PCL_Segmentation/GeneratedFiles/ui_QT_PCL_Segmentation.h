@@ -42,27 +42,27 @@ public:
     {
         if (QT_PCL_SegmentationClass->objectName().isEmpty())
             QT_PCL_SegmentationClass->setObjectName(QStringLiteral("QT_PCL_SegmentationClass"));
-        QT_PCL_SegmentationClass->resize(926, 568);
+        QT_PCL_SegmentationClass->resize(1627, 935);
         actionopen = new QAction(QT_PCL_SegmentationClass);
         actionopen->setObjectName(QStringLiteral("actionopen"));
         centralWidget = new QWidget(QT_PCL_SegmentationClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         label = new QLabel(centralWidget);
         label->setObjectName(QStringLiteral("label"));
-        label->setGeometry(QRect(660, 10, 251, 331));
+        label->setGeometry(QRect(1360, 10, 251, 331));
         showButton = new QPushButton(centralWidget);
         showButton->setObjectName(QStringLiteral("showButton"));
-        showButton->setGeometry(QRect(670, 440, 75, 23));
+        showButton->setGeometry(QRect(1360, 390, 71, 61));
         qvtkWidget = new QVTKWidget(centralWidget);
         qvtkWidget->setObjectName(QStringLiteral("qvtkWidget"));
-        qvtkWidget->setGeometry(QRect(10, 10, 631, 531));
+        qvtkWidget->setGeometry(QRect(0, 0, 1341, 911));
         segButton = new QPushButton(centralWidget);
         segButton->setObjectName(QStringLiteral("segButton"));
-        segButton->setGeometry(QRect(780, 440, 101, 23));
+        segButton->setGeometry(QRect(1450, 390, 91, 61));
         QT_PCL_SegmentationClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(QT_PCL_SegmentationClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 926, 23));
+        menuBar->setGeometry(QRect(0, 0, 1627, 23));
         menufile = new QMenu(menuBar);
         menufile->setObjectName(QStringLiteral("menufile"));
         QT_PCL_SegmentationClass->setMenuBar(menuBar);

@@ -33,7 +33,7 @@ private:
 
 	void initialVtkWidget();
 	pcl::PointXYZ median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
-
+	bool colorFlag;
 
 private slots:
 	void showDemo();
@@ -41,4 +41,5 @@ private slots:
 	void onOpen();
 	void segmentation();
 	void colorAxis();
+	void color(int r,int g,int b);
 };

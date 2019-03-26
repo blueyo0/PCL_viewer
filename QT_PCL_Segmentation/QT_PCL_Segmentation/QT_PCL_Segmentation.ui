@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>926</width>
-    <height>568</height>
+    <width>1627</width>
+    <height>935</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>660</x>
+      <x>1360</x>
       <y>10</y>
       <width>251</width>
       <height>331</height>
@@ -30,10 +30,10 @@
    <widget class="QPushButton" name="showButton">
     <property name="geometry">
      <rect>
-      <x>670</x>
-      <y>440</y>
-      <width>75</width>
-      <height>23</height>
+      <x>1360</x>
+      <y>390</y>
+      <width>71</width>
+      <height>61</height>
      </rect>
     </property>
     <property name="text">
@@ -43,20 +43,20 @@
    <widget class="QVTKWidget" name="qvtkWidget">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>10</y>
-      <width>631</width>
-      <height>531</height>
+      <x>0</x>
+      <y>0</y>
+      <width>1341</width>
+      <height>911</height>
      </rect>
     </property>
    </widget>
    <widget class="QPushButton" name="segButton">
     <property name="geometry">
      <rect>
-      <x>780</x>
-      <y>440</y>
-      <width>101</width>
-      <height>23</height>
+      <x>1450</x>
+      <y>390</y>
+      <width>91</width>
+      <height>61</height>
      </rect>
     </property>
     <property name="text">
@@ -69,7 +69,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>926</width>
+     <width>1627</width>
      <height>23</height>
     </rect>
    </property>
