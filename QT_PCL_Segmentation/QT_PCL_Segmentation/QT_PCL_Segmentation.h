@@ -29,11 +29,13 @@ private:
 	Ui::QT_PCL_SegmentationClass ui;
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
+	pcl::PointCloud<pcl::PointXYZ>::Ptr skelCloud;
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
 
 	void initialVtkWidget();
 	pcl::PointXYZ median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
 	bool colorFlag;
+	int colorCloudIndex;
 	void correctCenter();
 	double distance(pcl::PointXYZ, pcl::PointXYZ);
 
@@ -43,7 +45,7 @@ private slots:
 	void onOpen();
 	void segmentation();
 	void colorAxis();
-	void color(int r,int g,int b);
+	void color(pcl::PointCloud<pcl::PointXYZ>::Ptr,int,int ,int);
 	void drawLine();
 
 	//void clustering(int num);

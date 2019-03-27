@@ -21,8 +21,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_QT_PCL_Segmentation_t {
-    QByteArrayData data[13];
-    char stringdata0[96];
+    QByteArrayData data[11];
+    char stringdata0[126];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -39,16 +39,15 @@ QT_MOC_LITERAL(4, 38, 6), // "onOpen"
 QT_MOC_LITERAL(5, 45, 12), // "segmentation"
 QT_MOC_LITERAL(6, 58, 9), // "colorAxis"
 QT_MOC_LITERAL(7, 68, 5), // "color"
-QT_MOC_LITERAL(8, 74, 1), // "r"
-QT_MOC_LITERAL(9, 76, 1), // "g"
-QT_MOC_LITERAL(10, 78, 1), // "b"
-QT_MOC_LITERAL(11, 80, 8), // "drawLine"
-QT_MOC_LITERAL(12, 89, 6) // "kmeans"
+QT_MOC_LITERAL(8, 74, 35), // "pcl::PointCloud<pcl::PointXYZ..."
+QT_MOC_LITERAL(9, 110, 8), // "drawLine"
+QT_MOC_LITERAL(10, 119, 6) // "kmeans"
 
     },
     "QT_PCL_Segmentation\0showDemo\0\0showPCL\0"
     "onOpen\0segmentation\0colorAxis\0color\0"
-    "r\0g\0b\0drawLine\0kmeans"
+    "pcl::PointCloud<pcl::PointXYZ>::Ptr\0"
+    "drawLine\0kmeans"
 };
 #undef QT_MOC_LITERAL
 
@@ -71,9 +70,9 @@ static const uint qt_meta_data_QT_PCL_Segmentation[] = {
        4,    0,   56,    2, 0x08 /* Private */,
        5,    0,   57,    2, 0x08 /* Private */,
        6,    0,   58,    2, 0x08 /* Private */,
-       7,    3,   59,    2, 0x08 /* Private */,
-      11,    0,   66,    2, 0x08 /* Private */,
-      12,    0,   67,    2, 0x08 /* Private */,
+       7,    4,   59,    2, 0x08 /* Private */,
+       9,    0,   68,    2, 0x08 /* Private */,
+      10,    0,   69,    2, 0x08 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
@@ -81,7 +80,7 @@ static const uint qt_meta_data_QT_PCL_Segmentation[] = {
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, QMetaType::Int, QMetaType::Int, QMetaType::Int,    8,    9,   10,
+    QMetaType::Void, 0x80000000 | 8, QMetaType::Int, QMetaType::Int, QMetaType::Int,    2,    2,    2,    2,
     QMetaType::Void,
     QMetaType::Void,
 
@@ -99,7 +98,7 @@ void QT_PCL_Segmentation::qt_static_metacall(QObject *_o, QMetaObject::Call _c, 
         case 2: _t->onOpen(); break;
         case 3: _t->segmentation(); break;
         case 4: _t->colorAxis(); break;
-        case 5: _t->color((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3]))); break;
+        case 5: _t->color((*reinterpret_cast< pcl::PointCloud<pcl::PointXYZ>::Ptr(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3])),(*reinterpret_cast< int(*)>(_a[4]))); break;
         case 6: _t->drawLine(); break;
         case 7: _t->kmeans(); break;
         default: ;
