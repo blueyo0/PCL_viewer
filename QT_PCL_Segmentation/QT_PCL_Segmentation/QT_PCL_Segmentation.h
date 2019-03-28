@@ -29,10 +29,12 @@ private:
 	Ui::QT_PCL_SegmentationClass ui;
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
+	std::vector<int> tag;
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr skelCloud;
 	int branchNum;
 	std::vector<int> branchLen;
+	std::string modelSkelName;
 
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
 
@@ -40,8 +42,8 @@ private:
 	pcl::PointXYZ median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
 	bool colorFlag;
 	int colorCloudIndex;
-	void correctCenter();
-	double distance(pcl::PointXYZ, pcl::PointXYZ);
+	void correctCenter(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
+	double distance(pcl::PointXYZ a, pcl::PointXYZ b, int model = 1);
 
 private slots:
 	void showDemo();
@@ -58,4 +60,6 @@ private slots:
 	void readSkel(std::string filename);
 	void drawSkel();
 	void reDrawSkel();
+	void clearPointCloud();
+	void KNNsmooth();
 };

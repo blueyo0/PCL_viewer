@@ -21,8 +21,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_QT_PCL_Segmentation_t {
-    QByteArrayData data[16];
-    char stringdata0[178];
+    QByteArrayData data[18];
+    char stringdata0[204];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -46,14 +46,17 @@ QT_MOC_LITERAL(11, 128, 8), // "readSkel"
 QT_MOC_LITERAL(12, 137, 11), // "std::string"
 QT_MOC_LITERAL(13, 149, 8), // "filename"
 QT_MOC_LITERAL(14, 158, 8), // "drawSkel"
-QT_MOC_LITERAL(15, 167, 10) // "reDrawSkel"
+QT_MOC_LITERAL(15, 167, 10), // "reDrawSkel"
+QT_MOC_LITERAL(16, 178, 15), // "clearPointCloud"
+QT_MOC_LITERAL(17, 194, 9) // "KNNsmooth"
 
     },
     "QT_PCL_Segmentation\0showDemo\0\0showPCL\0"
     "onOpen\0segmentation\0colorByAxis\0color\0"
     "pcl::PointCloud<pcl::PointXYZ>::Ptr\0"
     "drawLine\0kmeans\0readSkel\0std::string\0"
-    "filename\0drawSkel\0reDrawSkel"
+    "filename\0drawSkel\0reDrawSkel\0"
+    "clearPointCloud\0KNNsmooth"
 };
 #undef QT_MOC_LITERAL
 
@@ -63,7 +66,7 @@ static const uint qt_meta_data_QT_PCL_Segmentation[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-      11,   14, // methods
+      13,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -71,17 +74,19 @@ static const uint qt_meta_data_QT_PCL_Segmentation[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    0,   69,    2, 0x08 /* Private */,
-       3,    0,   70,    2, 0x08 /* Private */,
-       4,    0,   71,    2, 0x08 /* Private */,
-       5,    0,   72,    2, 0x08 /* Private */,
-       6,    0,   73,    2, 0x08 /* Private */,
-       7,    4,   74,    2, 0x08 /* Private */,
-       9,    0,   83,    2, 0x08 /* Private */,
-      10,    0,   84,    2, 0x08 /* Private */,
-      11,    1,   85,    2, 0x08 /* Private */,
-      14,    0,   88,    2, 0x08 /* Private */,
-      15,    0,   89,    2, 0x08 /* Private */,
+       1,    0,   79,    2, 0x08 /* Private */,
+       3,    0,   80,    2, 0x08 /* Private */,
+       4,    0,   81,    2, 0x08 /* Private */,
+       5,    0,   82,    2, 0x08 /* Private */,
+       6,    0,   83,    2, 0x08 /* Private */,
+       7,    4,   84,    2, 0x08 /* Private */,
+       9,    0,   93,    2, 0x08 /* Private */,
+      10,    0,   94,    2, 0x08 /* Private */,
+      11,    1,   95,    2, 0x08 /* Private */,
+      14,    0,   98,    2, 0x08 /* Private */,
+      15,    0,   99,    2, 0x08 /* Private */,
+      16,    0,  100,    2, 0x08 /* Private */,
+      17,    0,  101,    2, 0x08 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
@@ -93,6 +98,8 @@ static const uint qt_meta_data_QT_PCL_Segmentation[] = {
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void, 0x80000000 | 12,   13,
+    QMetaType::Void,
+    QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
 
@@ -116,6 +123,8 @@ void QT_PCL_Segmentation::qt_static_metacall(QObject *_o, QMetaObject::Call _c, 
         case 8: _t->readSkel((*reinterpret_cast< std::string(*)>(_a[1]))); break;
         case 9: _t->drawSkel(); break;
         case 10: _t->reDrawSkel(); break;
+        case 11: _t->clearPointCloud(); break;
+        case 12: _t->KNNsmooth(); break;
         default: ;
         }
     }
@@ -146,13 +155,13 @@ int QT_PCL_Segmentation::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 11)
+        if (_id < 13)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 11;
+        _id -= 13;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 11)
+        if (_id < 13)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 11;
+        _id -= 13;
     }
     return _id;
 }
