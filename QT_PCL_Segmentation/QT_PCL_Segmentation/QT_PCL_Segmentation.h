@@ -29,7 +29,11 @@ private:
 	Ui::QT_PCL_SegmentationClass ui;
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
+
 	pcl::PointCloud<pcl::PointXYZ>::Ptr skelCloud;
+	int branchNum;
+	std::vector<int> branchLen;
+
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
 
 	void initialVtkWidget();
@@ -44,11 +48,14 @@ private slots:
 	void showPCL();
 	void onOpen();
 	void segmentation();
-	void colorAxis();
+	void colorByAxis();
 	void color(pcl::PointCloud<pcl::PointXYZ>::Ptr,int,int ,int);
 	void drawLine();
 
 	//void clustering(int num);
 	void kmeans();
 
+	void readSkel(std::string filename);
+	void drawSkel();
+	void reDrawSkel();
 };

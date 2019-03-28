@@ -60,7 +60,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Kmeans</string>
+     <string>cluster</string>
     </property>
    </widget>
    <widget class="QPushButton" name="drawButton">
@@ -73,7 +73,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>drawLine</string>
+     <string>draw_L1</string>
     </property>
    </widget>
    <widget class="QTextEdit" name="InfoText">
@@ -97,6 +97,19 @@
     </property>
     <property name="text">
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;信息栏&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="drawButton_2">
+    <property name="geometry">
+     <rect>
+      <x>1360</x>
+      <y>470</y>
+      <width>71</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>reDraw</string>
     </property>
    </widget>
   </widget>

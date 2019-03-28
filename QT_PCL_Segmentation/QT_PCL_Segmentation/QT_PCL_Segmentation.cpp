@@ -11,6 +11,7 @@ VTK_MODULE_INIT(vtkInteractionStyle)
 
 #include <vector>
 #include <string>
+#include <fstream>
 
 #include<time.h>
 #include<stdlib.h>
@@ -35,7 +36,8 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	connect(ui.actionopen, SIGNAL(triggered()), this, SLOT(onOpen()));
 	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(kmeans()));
 	//connect(ui.segButton, SIGNAL(clicked()), this, SLOT(showDemo()));
-	connect(ui.drawButton, SIGNAL(clicked()), this, SLOT(drawLine()));
+	connect(ui.drawButton, SIGNAL(clicked()), this, SLOT(drawSkel()));
+	connect(ui.drawButton_2, SIGNAL(clicked()), this, SLOT(reDrawSkel()));
 }
 
 void QT_PCL_Segmentation::initialVtkWidget()
@@ -97,16 +99,16 @@ void QT_PCL_Segmentation::onOpen()
 		viewer->updatePointCloud(cloud, "cloud");
 		viewer->addPointCloud(cloud, "cloud");
 
-		pcl::io::loadPCDFile(std::string("E:/gitRepos/PCL_viewer/QT_PCL_Segmentation/QT_PCL_Segmentation/dinasourSkel.pcd"), *skelCloud);
-		viewer->removePointCloud("skelCloud");
-		viewer->updatePointCloud(skelCloud, "skelCloud");
-		viewer->addPointCloud(skelCloud, "skelCloud");
+		//pcl::io::loadPCDFile(std::string("E:/gitRepos/PCL_viewer/QT_PCL_Segmentation/QT_PCL_Segmentation/dinasourSkel.pcd"), *skelCloud);
+		//viewer->removePointCloud("skelCloud");
+		//viewer->updatePointCloud(skelCloud, "skelCloud");
+		//viewer->addPointCloud(skelCloud, "skelCloud");
 
 		viewer->resetCamera();
 		ui.qvtkWidget->update();
 
 		this->color(cloud,250,140,20);
-		this->color(skelCloud, 5, 115, 235);
+		//this->color(skelCloud, 5, 115, 235);
 	}
 }
 
@@ -202,7 +204,7 @@ void QT_PCL_Segmentation::segmentation()
 	ui.qvtkWidget->update();
 }
 
-void QT_PCL_Segmentation::colorAxis()
+void QT_PCL_Segmentation::colorByAxis()
 {
 	pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud(new pcl::PointCloud <pcl::PointXYZRGB>);
 	//pcl::visualization::PCLVisualizer::Ptr rgbVis(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr colored_cloud);
@@ -419,4 +421,109 @@ void QT_PCL_Segmentation::kmeans() {
 double QT_PCL_Segmentation::distance(pcl::PointXYZ a, pcl::PointXYZ b) 
 {
 	return (a.x-b.x)*(a.x - b.x)+ (a.y - b.y)*(a.y - b.y)+ (a.z - b.z)*(a.z - b.z);
+}
+
+
+void QT_PCL_Segmentation::readSkel(std::string filename)
+{
+	ifstream in(filename);
+	char buffer[8];
+	char bufferChar;
+	int branchLenBuffer;
+	float pos[3];
+
+	if (!in.is_open())
+		return;
+	else 
+	{
+		in.get(buffer,3);//读取“CN ”
+		in >> branchNum;
+		for (int i = 0; i < branchNum; i++) 
+		{
+			in.get(bufferChar);//读取换行符
+			in.get(buffer,4);//读取“CNN ”
+			in >> branchLenBuffer;
+			this->branchLen.push_back(branchLenBuffer);
+			for (int j = 0; j < branchLenBuffer; j++) 
+			{
+				in >> pos[0] >> pos[1] >> pos[2];
+				this->skelCloud->push_back(pcl::PointXYZ(pos[0], pos[1], pos[2]));
+			}
+			in.get(buffer, 4);//读取\tab
+		}
+	}
+}
+
+void QT_PCL_Segmentation::drawSkel()
+{
+	readSkel("E:/gitRepos/PCL_viewer/QT_PCL_Segmentation/x64/Debug/dSkel.txt");
+	viewer->removeAllShapes();
+	pcl::ModelCoefficients cylinder_coeff;
+	cylinder_coeff.values.resize(7);
+	int len = 0,vecIndex = 0;
+	for (int i = 0; i < skelCloud->size(); i++)
+	{
+		len++;
+		if(len==1)
+			viewer->addSphere(skelCloud->points[i], 0.02, 0, 0, 135, "sphere" + std::to_string(i));
+		else if (len >= branchLen[vecIndex])
+		{
+			len = 0;
+			vecIndex++;
+			viewer->addSphere(skelCloud->points[i], 0.02, 0, 0, 135, "sphere" + std::to_string(i));
+		}
+		else
+			viewer->addSphere(skelCloud->points[i], 0.02, 0, 135, 0, "sphere" + std::to_string(i));
+
+	}
+	int index = -1;
+	for (int j = 0; j < branchNum; j++)
+	{
+		for (int i = 0; i < branchLen[j]; i++)
+		{
+			index++;
+			if (i == branchLen[j] - 1)
+				continue;
+			cylinder_coeff.values[0] = skelCloud->points[index].x;
+			cylinder_coeff.values[1] = skelCloud->points[index].y;
+			cylinder_coeff.values[2] = skelCloud->points[index].z;
+			cylinder_coeff.values[3] = skelCloud->points[index + 1].x - skelCloud->points[index].x;
+			cylinder_coeff.values[4] = skelCloud->points[index + 1].y - skelCloud->points[index].y;
+			cylinder_coeff.values[5] = skelCloud->points[index + 1].z - skelCloud->points[index].z;
+			cylinder_coeff.values[6] = 0.01;
+			viewer->addCylinder(cylinder_coeff, "skel" + std::to_string(index));
+			ui.InfoText->append("\nskel");
+			ui.InfoText->append(QString::number(index));			
+		}
+	}
+	ui.qvtkWidget->update();
+}
+
+void QT_PCL_Segmentation::reDrawSkel()
+{
+	readSkel("E:/gitRepos/PCL_viewer/QT_PCL_Segmentation/x64/Debug/dSkel.txt");
+	viewer->removeAllShapes();
+	pcl::ModelCoefficients cylinder_coeff;
+	cylinder_coeff.values.resize(7);
+	int index = -1;
+	for (int j = 0; j < branchNum; j++)
+	{
+		for (int i = 0; i < branchLen[j]; i++)
+		{
+			index++;
+			if (i == branchLen[j] - 1)
+				continue;
+			cylinder_coeff.values[0] = skelCloud->points[index].x;
+			cylinder_coeff.values[1] = skelCloud->points[index].y;
+			cylinder_coeff.values[2] = skelCloud->points[index].z;
+			cylinder_coeff.values[3] = skelCloud->points[index + 1].x - skelCloud->points[index].x;
+			cylinder_coeff.values[4] = skelCloud->points[index + 1].y - skelCloud->points[index].y;
+			cylinder_coeff.values[5] = skelCloud->points[index + 1].z - skelCloud->points[index].z;
+			cylinder_coeff.values[6] = 0.02;
+			viewer->addCylinder(cylinder_coeff, "skel" + std::to_string(index));
+			ui.InfoText->append("\nskel");
+			ui.InfoText->append(QString::number(index));
+		}
+	}
+	ui.qvtkWidget->update();
 }
