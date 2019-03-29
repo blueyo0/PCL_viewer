@@ -41,6 +41,7 @@ private:
 	void initialVtkWidget();
 	pcl::PointXYZ median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
 	bool colorFlag;
+	double kmeansRadius,c;//distance衰减函数的参数
 	int colorCloudIndex;
 	void correctCenter(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
 	double distance(pcl::PointXYZ a, pcl::PointXYZ b, int model = 1);
@@ -60,6 +61,8 @@ private slots:
 	void readSkel(std::string filename);
 	void drawSkel();
 	void reDrawSkel();
+	void BayesSkel();
 	void clearPointCloud();
+	void resetPointCloud();
 	void KNNsmooth();
 };

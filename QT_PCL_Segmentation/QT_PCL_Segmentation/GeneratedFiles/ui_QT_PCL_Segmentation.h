@@ -59,6 +59,8 @@ public:
     QLabel *label_14;
     QTextEdit *cValue;
     QLabel *label_13;
+    QPushButton *drawButton_3;
+    QPushButton *resetButton;
     QMenuBar *menuBar;
     QMenu *menufile;
     QToolBar *mainToolBar;
@@ -144,7 +146,7 @@ public:
         Radius_2->setGeometry(QRect(1390, 320, 51, 31));
         label_9 = new QLabel(centralWidget);
         label_9->setObjectName(QStringLiteral("label_9"));
-        label_9->setGeometry(QRect(1350, 290, 281, 31));
+        label_9->setGeometry(QRect(1350, 290, 301, 31));
         K_1 = new QTextEdit(centralWidget);
         K_1->setObjectName(QStringLiteral("K_1"));
         K_1->setGeometry(QRect(1470, 320, 51, 31));
@@ -173,6 +175,14 @@ public:
         label_13 = new QLabel(centralWidget);
         label_13->setObjectName(QStringLiteral("label_13"));
         label_13->setGeometry(QRect(1530, 320, 16, 31));
+        drawButton_3 = new QPushButton(centralWidget);
+        drawButton_3->setObjectName(QStringLiteral("drawButton_3"));
+        drawButton_3->setGeometry(QRect(1560, 60, 91, 61));
+        drawButton_3->setFont(font1);
+        resetButton = new QPushButton(centralWidget);
+        resetButton->setObjectName(QStringLiteral("resetButton"));
+        resetButton->setGeometry(QRect(1520, 810, 71, 61));
+        resetButton->setFont(font);
         QT_PCL_SegmentationClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(QT_PCL_SegmentationClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
@@ -200,8 +210,8 @@ public:
         QT_PCL_SegmentationClass->setWindowTitle(QApplication::translate("QT_PCL_SegmentationClass", "QT_PCL_Segmentation", nullptr));
         actionopen->setText(QApplication::translate("QT_PCL_SegmentationClass", "open", nullptr));
         showButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "test", nullptr));
-        segButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "LKmeans", nullptr));
-        drawButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "L1", nullptr));
+        segButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "over-seg", nullptr));
+        drawButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "L1-medial", nullptr));
         label_2->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">\344\277\241\346\201\257\346\240\217</span></p></body></html>", nullptr));
         drawButton_2->setText(QApplication::translate("QT_PCL_SegmentationClass", "Bayes", nullptr));
         segButton_2->setText(QApplication::translate("QT_PCL_SegmentationClass", "min-cut", nullptr));
@@ -232,7 +242,7 @@ public:
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:'SimSun'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
 "<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">1</p></body></html>", nullptr));
-        label_9->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">local Kmeans parameters </span><span style=\" font-size:12pt; font-style:italic;\">R(0.8,1]</span></p></body></html>", nullptr));
+        label_9->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">local Kmeans parameters </span><span style=\" font-size:12pt; font-style:italic;\">R(.95,1.4]</span></p></body></html>", nullptr));
         K_1->setHtml(QApplication::translate("QT_PCL_SegmentationClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
@@ -254,6 +264,8 @@ public:
 "</style></head><body style=\" font-family:'SimSun'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
 "<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">8</p></body></html>", nullptr));
         label_13->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">c</span></p></body></html>", nullptr));
+        drawButton_3->setText(QApplication::translate("QT_PCL_SegmentationClass", "only skel", nullptr));
+        resetButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "reset", nullptr));
         menufile->setTitle(QApplication::translate("QT_PCL_SegmentationClass", "file", nullptr));
     } // retranslateUi
 

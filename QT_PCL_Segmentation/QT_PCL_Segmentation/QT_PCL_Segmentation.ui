@@ -59,7 +59,7 @@
      </font>
     </property>
     <property name="text">
-     <string>LKmeans</string>
+     <string>over-seg</string>
     </property>
    </widget>
    <widget class="QPushButton" name="drawButton">
@@ -78,7 +78,7 @@
      </font>
     </property>
     <property name="text">
-     <string>L1</string>
+     <string>L1-medial</string>
     </property>
    </widget>
    <widget class="QTextEdit" name="InfoText">
@@ -312,12 +312,12 @@ p, li { white-space: pre-wrap; }
      <rect>
       <x>1350</x>
       <y>290</y>
-      <width>281</width>
+      <width>301</width>
       <height>31</height>
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;local Kmeans parameters &lt;/span&gt;&lt;span style=&quot; font-size:12pt; font-style:italic;&quot;&gt;R(0.8,1]&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;local Kmeans parameters &lt;/span&gt;&lt;span style=&quot; font-size:12pt; font-style:italic;&quot;&gt;R(.95,1.4]&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QTextEdit" name="K_1">
@@ -453,6 +453,44 @@ p, li { white-space: pre-wrap; }
     </property>
     <property name="text">
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;c&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="drawButton_3">
+    <property name="geometry">
+     <rect>
+      <x>1560</x>
+      <y>60</y>
+      <width>91</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>黑体</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>only skel</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="resetButton">
+    <property name="geometry">
+     <rect>
+      <x>1520</x>
+      <y>810</y>
+      <width>71</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>004方正古隶简体</family>
+      <pointsize>20</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>reset</string>
     </property>
    </widget>
   </widget>

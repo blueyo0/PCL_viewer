@@ -30,18 +30,25 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	//初始化
 	initialVtkWidget();
 	viewer->setBackgroundColor(255, 255, 255);	
-	colorFlag = false;
-	colorCloudIndex = 0;
-	//连接信号和槽
-	connect(ui.showButton, SIGNAL(clicked()), this, SLOT(showPCL()));
+	this->colorFlag = false;
+	this->colorCloudIndex = 0;
+	bool ok = true;
+	this->kmeansRadius = ui.Radius_2->toPlainText().toDouble(&ok);
+	this->c = -1 * ui.cValue->toPlainText().toDouble(&ok);
+	//连接信号和槽	
 	connect(ui.actionopen, SIGNAL(triggered()), this, SLOT(onOpen()));
+
 	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(kmeans()));
 	connect(ui.segButton_2, SIGNAL(clicked()), this, SLOT(segmentation()));
 	connect(ui.segButton_3, SIGNAL(clicked()), this, SLOT(KNNsmooth()));
-	//connect(ui.segButton, SIGNAL(clicked()), this, SLOT(showDemo()));
+
 	connect(ui.drawButton, SIGNAL(clicked()), this, SLOT(drawSkel()));
-	connect(ui.drawButton_2, SIGNAL(clicked()), this, SLOT(reDrawSkel()));
+	connect(ui.drawButton_2, SIGNAL(clicked()), this, SLOT(BayesSkel()));
+	connect(ui.drawButton_3, SIGNAL(clicked()), this, SLOT(reDrawSkel()));
+
 	connect(ui.clearButton, SIGNAL(clicked()), this, SLOT(clearPointCloud()));
+	connect(ui.showButton, SIGNAL(clicked()), this, SLOT(showPCL()));
+	connect(ui.resetButton, SIGNAL(clicked()), this, SLOT(resetPointCloud()));
 }
 
 void QT_PCL_Segmentation::initialVtkWidget()
@@ -367,7 +374,7 @@ void QT_PCL_Segmentation::kmeans() {
 	}
 
 	ui.InfoText->append("\niteration start");
-	for (size_t i = 0; i < cloud->points.size(); ++i)
+	for (size_t i = 0; i < cloud->points.size(); ++i) 
 	{
 		int minIndex = (int)(num * rand() / (RAND_MAX + 1.0));
 		int minDist = distance(center[minIndex], cloud->points[i]);
@@ -465,16 +472,11 @@ double QT_PCL_Segmentation::distance(pcl::PointXYZ a, pcl::PointXYZ b,int model)
 		return d2;
 	}
 	else if (model == 2) {
-		bool ok = true;
-		double radius = ui.Radius_2->toPlainText().toDouble(&ok);
-		double c = -1 * ui.cValue->toPlainText().toDouble(&ok);
-		double theta = 100*exp(c/pow(radius,2)*d2)+1;
+		double theta = 100*exp(c/pow(kmeansRadius,2)*d2)+1;
 		return d2*theta;
 	}
 	else {
-		bool ok = true;
-		double radius = ui.Radius_2->toPlainText().toDouble(&ok);
-		return (d2 > radius) ? 100 : d2;
+		return (d2 > kmeansRadius) ? 100 : d2;
 	}
 }
 
@@ -594,7 +596,20 @@ void QT_PCL_Segmentation::clearPointCloud()
 	ui.qvtkWidget->update();
 }
 
+void QT_PCL_Segmentation::resetPointCloud()
+{
+	viewer->removeAllShapes();
+	this->color(cloud, 250, 140, 20);
+	viewer->resetCamera();
+	ui.qvtkWidget->update();
+}
+
 void QT_PCL_Segmentation::KNNsmooth()
 {
 	//如何减少KNN的计算量
+}
+
+void QT_PCL_Segmentation::BayesSkel()
+{
+
 }
