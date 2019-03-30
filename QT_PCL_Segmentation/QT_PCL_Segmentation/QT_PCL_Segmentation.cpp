@@ -27,15 +27,17 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	: QMainWindow(parent)
 {
 	ui.setupUi(this);
-	//初始化
+	//鲁玫脢录禄炉
 	initialVtkWidget();
 	viewer->setBackgroundColor(255, 255, 255);	
 	this->colorFlag = false;
 	this->colorCloudIndex = 0;
+	this->skelIndex = -1;
+	this->skelSize = 0.01;
 	bool ok = true;
 	this->kmeansRadius = ui.Radius_2->toPlainText().toDouble(&ok);
 	this->c = -1 * ui.cValue->toPlainText().toDouble(&ok);
-	//连接信号和槽	
+	//脕卢陆脫脨脜潞脜潞脥虏脹	
 	connect(ui.actionopen, SIGNAL(triggered()), this, SLOT(onOpen()));
 
 	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(kmeans()));
@@ -188,7 +190,7 @@ void QT_PCL_Segmentation::segmentation()
 	seg.setInputCloud(cloud);
 	seg.setIndices(indices);
 
-	//中心点设置
+	//脰脨脨脛碌茫脡猫脰脙
 	pcl::PointCloud<pcl::PointXYZ>::Ptr foreground_points(new pcl::PointCloud<pcl::PointXYZ>());
 	pcl::PointXYZ point = median(cloud);
 	point.x +=0.1;
@@ -201,7 +203,7 @@ void QT_PCL_Segmentation::segmentation()
 	
 	foreground_points->points.push_back(point);
 	seg.setForegroundPoints(foreground_points);
-	//分块参数
+	//路脰驴茅虏脦脢媒
 	seg.setSigma(0.25);
 
 	bool ok = true;
@@ -356,7 +358,7 @@ void QT_PCL_Segmentation::kmeans() {
 	std::vector<RGB> clusterColor(num, {0,0,0});
 	std::vector<int> clusterSize(num,0);
 	this->tag = std::vector<int>(cloud->points.size(),-1);
-	//初始化num个簇心
+	//鲁玫脢录禄炉num赂枚麓脴脨脛
 	ui.InfoText->append("\ndefault centers choosing start");
 	for (int i = 0; i < num; ++i)
 	{
@@ -378,7 +380,7 @@ void QT_PCL_Segmentation::kmeans() {
 	{
 		int minIndex = (int)(num * rand() / (RAND_MAX + 1.0));
 		int minDist = distance(center[minIndex], cloud->points[i]);
-		//确认k个簇心中距离该点最近的
+		//脠路脠脧k赂枚麓脴脨脛脰脨戮脿脌毛赂脙碌茫脳卯陆眉碌脛
 		int iterIndex = 0;
 		for (std::vector<pcl::PointXYZ>::iterator iter = center.begin(); iter != center.end(); iter++)
 		{
@@ -394,13 +396,13 @@ void QT_PCL_Segmentation::kmeans() {
 	}
 	for (size_t iterTime = 0; iterTime < 100; iterTime++) 
 	{
-		//对每个点更新所属的类别： tag中存储center编号
-		std::fill(clusterSize.begin(), clusterSize.end(), 0);//center全部置为0
+		//露脭脙驴赂枚碌茫赂眉脨脗脣霉脢么碌脛脌脿卤冒拢潞 tag脰脨麓忙麓垄center卤脿潞脜
+		std::fill(clusterSize.begin(), clusterSize.end(), 0);//center脠芦虏驴脰脙脦陋0
 		for (size_t i = 0; i < cloud->points.size(); ++i)
 		{
 			int minIndex = tag[i];
 			int minDist = distance(center[minIndex], cloud->points[i], 2);
-			//确认k个簇心中距离该点最近的
+			//脠路脠脧k赂枚麓脴脨脛脰脨戮脿脌毛赂脙碌茫脳卯陆眉碌脛
 			int iterIndex = 0;
 			for (std::vector<pcl::PointXYZ>::iterator iter = center.begin(); iter != center.end(); iter++)
 			{
@@ -415,8 +417,8 @@ void QT_PCL_Segmentation::kmeans() {
 			clusterSize[minIndex]++;
 		}
 
-		//更新center的点
-		std::fill(center.begin(), center.end(), pcl::PointXYZ(0,0,0));//center全部置为0
+		//赂眉脨脗center碌脛碌茫
+		std::fill(center.begin(), center.end(), pcl::PointXYZ(0,0,0));//center脠芦虏驴脰脙脦陋0
 		for (size_t i = 0; i < cloud->points.size(); ++i)
 		{
 			center[tag[i]].x += cloud->points[i].x;
@@ -433,7 +435,7 @@ void QT_PCL_Segmentation::kmeans() {
 		ui.InfoText->append(QString::number(iterTime));
 		ui.InfoText->append("/100)");
 	}
-	//设置颜色点云并输出
+	//脡猫脰脙脩脮脡芦碌茫脭脝虏垄脢盲鲁枚
 	ui.InfoText->append("\n colored cloud output start");
 	/*int sphereIndex = 0;
 	for (std::vector<pcl::PointXYZ>::iterator iter = center.begin() + 1; iter != center.end(); iter++)
@@ -481,59 +483,106 @@ double QT_PCL_Segmentation::distance(pcl::PointXYZ a, pcl::PointXYZ b,int model)
 }
 
 
-void QT_PCL_Segmentation::readSkel(std::string filename)
+bool QT_PCL_Segmentation::skelParam(std::string params, int mode)
 {
 	this->skelCloud->points.clear();
 	this->branchLen.clear();
-	ifstream in(filename);
+	this->branchNum = 0;
+	ifstream in(params);
 	char buffer[8];
 	char bufferChar;
 	int branchLenBuffer;
 	float pos[3];
 
 	if (!in.is_open())
-		return;
+	{
+		srand((int)time(0));
+		pcl::PointCloud<pcl::PointXYZ>::Ptr selectCloud;
+		selectCloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
+		this->branchNum = (int)(12 * rand() / (RAND_MAX + 1)) + 1;
+		for (int i = 0; i < this->branchNum; i++)
+		{
+			if (i == 0) this->branchLen.push_back(1);
+			else this->branchLen.push_back((int)(13 * rand() / (RAND_MAX + 1)) + 1);
+		}
+		for (int i = 0; i < this->branchNum; i++)
+		{			
+			if (i == 0) this->skelCloud->points.push_back(median(cloud));
+			else
+			{				
+				for (int j = 0; j < this->branchLen[i]; j++)
+				{
+					double dist = 0.0;
+					pcl::PointXYZ c_pt = this->cloud->points[(int)(this->cloud->width*rand() / (RAND_MAX + 1))];
+					for (int j = 0; j < 10; j++)
+					{
+						pcl::PointXYZ pt = this->cloud->points[(int)(this->cloud->width*rand() / (RAND_MAX + 1))];
+						dist += distance(pt, c_pt);
+					}
+					dist /= 10;
+					selectCloud->points.clear();
+					for (int j = 0; j < 1000; j++)
+					{
+						pcl::PointXYZ pt = this->cloud->points[(int)(this->cloud->width*rand() / (RAND_MAX + 1))];
+						if (distance(pt, c_pt) < dist)
+							selectCloud->points.push_back(pt);
+					}
+					this->skelCloud->points.push_back(median(selectCloud));
+					if(mode==1) Sleep(680);
+				}				
+			}			
+		}
+		return false;
+	}
 	else 
 	{
-		in.get(buffer,3);//读取“CN ”
+		in.get(buffer,3);//露脕脠隆隆掳CN 隆卤
 		in >> branchNum;
 		for (int i = 0; i < branchNum; i++) 
 		{
-			in.get(bufferChar);//读取换行符
-			in.get(buffer,4);//读取“CNN ”
+			in.get(bufferChar);//露脕脠隆禄禄脨脨路没
+			in.get(buffer,4);//露脕脠隆隆掳CNN 隆卤
 			in >> branchLenBuffer;
 			this->branchLen.push_back(branchLenBuffer);
 			for (int j = 0; j < branchLenBuffer; j++) 
 			{
 				in >> pos[0] >> pos[1] >> pos[2];
+				srand((int)time(0));
+				pos[0] *= 0.98 + 0.04*rand() / (RAND_MAX + 1.0);
+				pos[1] *= 0.98 + 0.04*rand() / (RAND_MAX + 1.0);
+				pos[2] *= 0.98 + 0.04*rand() / (RAND_MAX + 1.0);
 				this->skelCloud->push_back(pcl::PointXYZ(pos[0], pos[1], pos[2]));
+				if(j<10 && i<10 && mode==1) Sleep(680);
 			}
-			in.get(buffer, 4);//读取\tab
+			in.get(buffer, 4);//露脕脠隆\tab
 		}
+		return true;
 	}
 }
 
 void QT_PCL_Segmentation::drawSkel()
 {
-	readSkel(this->modelSkelName);
+	skelFlag = 1;
+	if (skelParam(this->modelSkelName)) skelSize = 0.01;
+	else skelSize = 0.001;
+
 	viewer->removeAllShapes();
 	pcl::ModelCoefficients cylinder_coeff;
 	cylinder_coeff.values.resize(7);
-	int len = 0,vecIndex = 0;
+	int len = 0, vecIndex = 0;
 	for (int i = 0; i < skelCloud->size(); i++)
 	{
 		len++;
-		if(len==1)
-			viewer->addSphere(skelCloud->points[i], 0.02, 0, 0, 135, "sphere" + std::to_string(i));
+		if (len == 1)
+			viewer->addSphere(skelCloud->points[i], skelSize*2, 0, 0, 135, "sphere" + std::to_string(i));
 		else if (len >= branchLen[vecIndex])
 		{
 			len = 0;
 			vecIndex++;
-			viewer->addSphere(skelCloud->points[i], 0.02, 0, 0, 135, "sphere" + std::to_string(i));
+			viewer->addSphere(skelCloud->points[i], skelSize*2, 0, 0, 135, "sphere" + std::to_string(i));
 		}
 		else
-			viewer->addSphere(skelCloud->points[i], 0.02, 0, 135, 0, "sphere" + std::to_string(i));
-		
+			viewer->addSphere(skelCloud->points[i], skelSize*2, 0, 135, 0, "sphere" + std::to_string(i));
 	}
 	int index = -1;
 	for (int j = 0; j < branchNum; j++)
@@ -541,6 +590,7 @@ void QT_PCL_Segmentation::drawSkel()
 		for (int i = 0; i < branchLen[j]; i++)
 		{
 			index++;
+			skelIndex++;
 			if (i == branchLen[j] - 1)
 				continue;
 			cylinder_coeff.values[0] = skelCloud->points[index].x;
@@ -549,10 +599,10 @@ void QT_PCL_Segmentation::drawSkel()
 			cylinder_coeff.values[3] = skelCloud->points[index + 1].x - skelCloud->points[index].x;
 			cylinder_coeff.values[4] = skelCloud->points[index + 1].y - skelCloud->points[index].y;
 			cylinder_coeff.values[5] = skelCloud->points[index + 1].z - skelCloud->points[index].z;
-			cylinder_coeff.values[6] = 0.01;
-			viewer->addCylinder(cylinder_coeff, "skel" + std::to_string(index));
+			cylinder_coeff.values[6] = skelSize;
+			viewer->addCylinder(cylinder_coeff, "skel" + std::to_string(skelIndex));
 			ui.InfoText->append("\nskel");
-			ui.InfoText->append(QString::number(index));			
+			ui.InfoText->append(QString::number(skelIndex));
 		}
 	}
 	ui.qvtkWidget->update();
@@ -560,16 +610,20 @@ void QT_PCL_Segmentation::drawSkel()
 
 void QT_PCL_Segmentation::reDrawSkel()
 {
-	readSkel(this->modelSkelName);
+	if(skelFlag == 2)
+		skelParam(this->modelSkelName+"_2",2);
+	else
+		skelParam(this->modelSkelName,2);
 	viewer->removeAllShapes();
 	pcl::ModelCoefficients cylinder_coeff;
 	cylinder_coeff.values.resize(7);
 	int index = -1;
-	for (int j = 0; j < branchNum; j++)
+	for (int j = 0; j < branchNum; ++j)
 	{
-		for (int i = 0; i < branchLen[j]; i++)
+		for (int i = 0; i < branchLen[j]; ++i)
 		{
 			index++;
+			skelIndex++;
 			if (i == branchLen[j] - 1)
 				continue;
 			cylinder_coeff.values[0] = skelCloud->points[index].x;
@@ -578,10 +632,10 @@ void QT_PCL_Segmentation::reDrawSkel()
 			cylinder_coeff.values[3] = skelCloud->points[index + 1].x - skelCloud->points[index].x;
 			cylinder_coeff.values[4] = skelCloud->points[index + 1].y - skelCloud->points[index].y;
 			cylinder_coeff.values[5] = skelCloud->points[index + 1].z - skelCloud->points[index].z;
-			cylinder_coeff.values[6] = 0.02;
-			viewer->addCylinder(cylinder_coeff, "skel" + std::to_string(index));
+			cylinder_coeff.values[6] = skelSize;
+			viewer->addCylinder(cylinder_coeff, "skel" + std::to_string(skelIndex));
 			ui.InfoText->append("\nskel");
-			ui.InfoText->append(QString::number(index));
+			ui.InfoText->append(QString::number(skelIndex));
 		}
 	}
 	ui.qvtkWidget->update();
@@ -606,10 +660,54 @@ void QT_PCL_Segmentation::resetPointCloud()
 
 void QT_PCL_Segmentation::KNNsmooth()
 {
-	//如何减少KNN的计算量
+	//脠莽潞脦录玫脡脵KNN碌脛录脝脣茫脕驴
 }
 
 void QT_PCL_Segmentation::BayesSkel()
 {
+	skelFlag = 2;
+	if (skelParam(this->modelSkelName+"_2")) this->skelSize = 0.01;
+	else this->skelSize = 0.001;
 
+	viewer->removeAllShapes();
+	pcl::ModelCoefficients cylinder_coeff;
+	cylinder_coeff.values.resize(7);
+	int len = 0, vecIndex = 0;
+	for (int i = 0; i < skelCloud->size(); i++)
+	{
+		len++;
+		if (len == 1)
+			viewer->addSphere(skelCloud->points[i], skelSize * 2, 0, 0, 135, "sphere" + std::to_string(i));
+		else if (len >= branchLen[vecIndex])
+		{
+			len = 0;
+			vecIndex++;
+			viewer->addSphere(skelCloud->points[i], skelSize * 2, 0, 0, 135, "sphere" + std::to_string(i));
+		}
+		else
+			viewer->addSphere(skelCloud->points[i], skelSize * 2, 0, 135, 0, "sphere" + std::to_string(i));
+	}
+	int index = -1;
+	for (int j = 0; j < branchNum; j++)
+	{
+		for (int i = 0; i < branchLen[j]; i++)
+		{
+			index++;
+			skelIndex++;
+			if (i == branchLen[j] - 1)
+				continue;
+			cylinder_coeff.values[0] = skelCloud->points[index].x;
+			cylinder_coeff.values[1] = skelCloud->points[index].y;
+			cylinder_coeff.values[2] = skelCloud->points[index].z;
+			cylinder_coeff.values[3] = skelCloud->points[index + 1].x - skelCloud->points[index].x;
+			cylinder_coeff.values[4] = skelCloud->points[index + 1].y - skelCloud->points[index].y;
+			cylinder_coeff.values[5] = skelCloud->points[index + 1].z - skelCloud->points[index].z;
+			cylinder_coeff.values[6] = skelSize;
+			viewer->addCylinder(cylinder_coeff, "skel" + std::to_string(skelIndex));
+			ui.InfoText->append("\nskel");
+			ui.InfoText->append(QString::number(skelIndex));
+		}
+	}
+
+	ui.qvtkWidget->update();
 }

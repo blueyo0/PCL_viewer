@@ -21,8 +21,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_QT_PCL_Segmentation_t {
-    QByteArrayData data[20];
-    char stringdata0[230];
+    QByteArrayData data[21];
+    char stringdata0[234];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -42,23 +42,24 @@ QT_MOC_LITERAL(7, 70, 5), // "color"
 QT_MOC_LITERAL(8, 76, 35), // "pcl::PointCloud<pcl::PointXYZ..."
 QT_MOC_LITERAL(9, 112, 8), // "drawLine"
 QT_MOC_LITERAL(10, 121, 6), // "kmeans"
-QT_MOC_LITERAL(11, 128, 8), // "readSkel"
-QT_MOC_LITERAL(12, 137, 11), // "std::string"
-QT_MOC_LITERAL(13, 149, 8), // "filename"
-QT_MOC_LITERAL(14, 158, 8), // "drawSkel"
-QT_MOC_LITERAL(15, 167, 10), // "reDrawSkel"
-QT_MOC_LITERAL(16, 178, 9), // "BayesSkel"
-QT_MOC_LITERAL(17, 188, 15), // "clearPointCloud"
-QT_MOC_LITERAL(18, 204, 15), // "resetPointCloud"
-QT_MOC_LITERAL(19, 220, 9) // "KNNsmooth"
+QT_MOC_LITERAL(11, 128, 9), // "skelParam"
+QT_MOC_LITERAL(12, 138, 11), // "std::string"
+QT_MOC_LITERAL(13, 150, 6), // "params"
+QT_MOC_LITERAL(14, 157, 4), // "mode"
+QT_MOC_LITERAL(15, 162, 8), // "drawSkel"
+QT_MOC_LITERAL(16, 171, 10), // "reDrawSkel"
+QT_MOC_LITERAL(17, 182, 9), // "BayesSkel"
+QT_MOC_LITERAL(18, 192, 15), // "clearPointCloud"
+QT_MOC_LITERAL(19, 208, 15), // "resetPointCloud"
+QT_MOC_LITERAL(20, 224, 9) // "KNNsmooth"
 
     },
     "QT_PCL_Segmentation\0showDemo\0\0showPCL\0"
     "onOpen\0segmentation\0colorByAxis\0color\0"
     "pcl::PointCloud<pcl::PointXYZ>::Ptr\0"
-    "drawLine\0kmeans\0readSkel\0std::string\0"
-    "filename\0drawSkel\0reDrawSkel\0BayesSkel\0"
-    "clearPointCloud\0resetPointCloud\0"
+    "drawLine\0kmeans\0skelParam\0std::string\0"
+    "params\0mode\0drawSkel\0reDrawSkel\0"
+    "BayesSkel\0clearPointCloud\0resetPointCloud\0"
     "KNNsmooth"
 };
 #undef QT_MOC_LITERAL
@@ -69,7 +70,7 @@ static const uint qt_meta_data_QT_PCL_Segmentation[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-      15,   14, // methods
+      16,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -77,21 +78,22 @@ static const uint qt_meta_data_QT_PCL_Segmentation[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    0,   89,    2, 0x08 /* Private */,
-       3,    0,   90,    2, 0x08 /* Private */,
-       4,    0,   91,    2, 0x08 /* Private */,
-       5,    0,   92,    2, 0x08 /* Private */,
-       6,    0,   93,    2, 0x08 /* Private */,
-       7,    4,   94,    2, 0x08 /* Private */,
-       9,    0,  103,    2, 0x08 /* Private */,
-      10,    0,  104,    2, 0x08 /* Private */,
-      11,    1,  105,    2, 0x08 /* Private */,
-      14,    0,  108,    2, 0x08 /* Private */,
-      15,    0,  109,    2, 0x08 /* Private */,
-      16,    0,  110,    2, 0x08 /* Private */,
-      17,    0,  111,    2, 0x08 /* Private */,
-      18,    0,  112,    2, 0x08 /* Private */,
-      19,    0,  113,    2, 0x08 /* Private */,
+       1,    0,   94,    2, 0x08 /* Private */,
+       3,    0,   95,    2, 0x08 /* Private */,
+       4,    0,   96,    2, 0x08 /* Private */,
+       5,    0,   97,    2, 0x08 /* Private */,
+       6,    0,   98,    2, 0x08 /* Private */,
+       7,    4,   99,    2, 0x08 /* Private */,
+       9,    0,  108,    2, 0x08 /* Private */,
+      10,    0,  109,    2, 0x08 /* Private */,
+      11,    2,  110,    2, 0x08 /* Private */,
+      11,    1,  115,    2, 0x28 /* Private | MethodCloned */,
+      15,    0,  118,    2, 0x08 /* Private */,
+      16,    0,  119,    2, 0x08 /* Private */,
+      17,    0,  120,    2, 0x08 /* Private */,
+      18,    0,  121,    2, 0x08 /* Private */,
+      19,    0,  122,    2, 0x08 /* Private */,
+      20,    0,  123,    2, 0x08 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
@@ -102,7 +104,8 @@ static const uint qt_meta_data_QT_PCL_Segmentation[] = {
     QMetaType::Void, 0x80000000 | 8, QMetaType::Int, QMetaType::Int, QMetaType::Int,    2,    2,    2,    2,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, 0x80000000 | 12,   13,
+    QMetaType::Bool, 0x80000000 | 12, QMetaType::Int,   13,   14,
+    QMetaType::Bool, 0x80000000 | 12,   13,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
@@ -127,13 +130,16 @@ void QT_PCL_Segmentation::qt_static_metacall(QObject *_o, QMetaObject::Call _c, 
         case 5: _t->color((*reinterpret_cast< pcl::PointCloud<pcl::PointXYZ>::Ptr(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3])),(*reinterpret_cast< int(*)>(_a[4]))); break;
         case 6: _t->drawLine(); break;
         case 7: _t->kmeans(); break;
-        case 8: _t->readSkel((*reinterpret_cast< std::string(*)>(_a[1]))); break;
-        case 9: _t->drawSkel(); break;
-        case 10: _t->reDrawSkel(); break;
-        case 11: _t->BayesSkel(); break;
-        case 12: _t->clearPointCloud(); break;
-        case 13: _t->resetPointCloud(); break;
-        case 14: _t->KNNsmooth(); break;
+        case 8: { bool _r = _t->skelParam((*reinterpret_cast< std::string(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])));
+            if (_a[0]) *reinterpret_cast< bool*>(_a[0]) = std::move(_r); }  break;
+        case 9: { bool _r = _t->skelParam((*reinterpret_cast< std::string(*)>(_a[1])));
+            if (_a[0]) *reinterpret_cast< bool*>(_a[0]) = std::move(_r); }  break;
+        case 10: _t->drawSkel(); break;
+        case 11: _t->reDrawSkel(); break;
+        case 12: _t->BayesSkel(); break;
+        case 13: _t->clearPointCloud(); break;
+        case 14: _t->resetPointCloud(); break;
+        case 15: _t->KNNsmooth(); break;
         default: ;
         }
     }
@@ -164,13 +170,13 @@ int QT_PCL_Segmentation::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 15)
+        if (_id < 16)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 15;
+        _id -= 16;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 15)
+        if (_id < 16)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 15;
+        _id -= 16;
     }
     return _id;
 }

@@ -4,6 +4,7 @@
 #include "ui_QT_PCL_Segmentation.h"
 
 #include <vector>
+#include <windows.h>
 
 #include <pcl/common/projection_matrix.h>
 #include <pcl/ModelCoefficients.h>
@@ -32,6 +33,9 @@ private:
 	std::vector<int> tag;
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr skelCloud;
+	int skelFlag;
+	int skelIndex;
+	double skelSize;
 	int branchNum;
 	std::vector<int> branchLen;
 	std::string modelSkelName;
@@ -58,7 +62,7 @@ private slots:
 	//void clustering(int num);
 	void kmeans();
 
-	void readSkel(std::string filename);
+	bool skelParam(std::string params, int mode=1);
 	void drawSkel();
 	void reDrawSkel();
 	void BayesSkel();
