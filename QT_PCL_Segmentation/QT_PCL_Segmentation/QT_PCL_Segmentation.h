@@ -44,6 +44,8 @@ private:
 
 	void initialVtkWidget();
 	pcl::PointXYZ median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
+	bool BayesTest(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
+	void connectSkel(int i,int j, pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
 	bool colorFlag;
 	double kmeansRadius,c;//distance衰减函数的参数
 	int colorCloudIndex;

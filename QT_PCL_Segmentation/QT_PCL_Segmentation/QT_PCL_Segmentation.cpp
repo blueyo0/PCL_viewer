@@ -37,7 +37,7 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	bool ok = true;
 	this->kmeansRadius = ui.Radius_2->toPlainText().toDouble(&ok);
 	this->c = -1 * ui.cValue->toPlainText().toDouble(&ok);
-	//Á¬½ÓÐÅºÅºÍ²Û	
+	//连接按钮	
 	connect(ui.actionopen, SIGNAL(triggered()), this, SLOT(onOpen()));
 
 	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(kmeans()));
@@ -658,9 +658,105 @@ void QT_PCL_Segmentation::resetPointCloud()
 	ui.qvtkWidget->update();
 }
 
+void QT_PCL_Segmentation::connectSkel(int i,int j,pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud)
+{
+	viewer->removeAllShapes();
+	pcl::ModelCoefficients cylinder_coeff;
+	cylinder_coeff.values.resize(7);
+	int index = -1;
+	for (int j = 0; j < branchNum; ++j)
+	{
+		for (int i = 0; i < branchLen[j]; ++i)
+		{
+			index++;
+			skelIndex++;
+			if (i == branchLen[j] - 1)
+				continue;
+			cylinder_coeff.values[0] = skelCloud->points[index].x;
+			cylinder_coeff.values[1] = skelCloud->points[index].y;
+			cylinder_coeff.values[2] = skelCloud->points[index].z;
+			cylinder_coeff.values[3] = skelCloud->points[index + 1].x - skelCloud->points[index].x;
+			cylinder_coeff.values[4] = skelCloud->points[index + 1].y - skelCloud->points[index].y;
+			cylinder_coeff.values[5] = skelCloud->points[index + 1].z - skelCloud->points[index].z;
+			cylinder_coeff.values[6] = skelSize;
+			viewer->addCylinder(cylinder_coeff, "skel" + std::to_string(skelIndex));
+			ui.InfoText->append("\nskel");
+			ui.InfoText->append(QString::number(skelIndex));
+		}
+	}
+	ui.qvtkWidget->update();
+}
+
 void QT_PCL_Segmentation::KNNsmooth()
 {
-	//ÈçºÎ¼õÉÙKNNµÄ¼ÆËãÁ¿
+	std::vector<int> KNNtag(this->cloud->points.size(),0);
+	std::vector<int> KNNindex(ui.K_1->toPlainText().toDouble(), -1);
+	std::vector<double> KNNdist(ui.K_1->toPlainText().toDouble(),10000);
+	for (int i = 0; i < this->cloud->points.size(); ++i)
+	{
+		for (int j = 0; j < this->cloud->points.size(); ++j)
+		{
+			//选择KNN
+			std::vector<double>::iterator maxDist = std::max_element(KNNdist.begin(), KNNdist.end());
+			if (distance(this->cloud->points[i], this->cloud->points[j]) < *maxDist && KNNtag[j]==-1) {
+				*maxDist = distance(this->cloud->points[i], this->cloud->points[j]);
+				KNNindex[std::distance(KNNdist.begin(), maxDist)] = j;
+			}			
+		}
+		//刷新KNN标记&KNN平滑
+		std::vector<int> tempTag;
+		for (std::vector<int>::iterator iter = KNNindex.begin(); iter != KNNindex.end(); ++iter)
+		{
+			tempTag.push_back(this->tag[*iter]);
+			KNNtag[*iter] = this->tag[*iter];
+		}		
+		std::sort(tempTag.begin(), tempTag.end());
+		int maxCount = 0;
+		int pre = -1;
+		int preContent =-1, preCount = 0;
+		for (std::vector<int>::iterator iter = KNNindex.begin(); iter != KNNindex.end(); ++iter) 
+		{
+			
+			if (KNNtag[*iter]==pre)
+				maxCount++;
+			else
+			{
+				maxCount = 1;
+			}
+			if (maxCount > preCount)
+			{
+				preContent = KNNtag[*iter];
+				preCount = maxCount;
+			}
+			pre = KNNtag[*iter];
+		}
+		for (std::vector<int>::iterator iter = KNNindex.begin(); iter != KNNindex.end(); ++iter)
+		{
+			tag[*iter] = preContent;
+		}
+	}
+	
+}
+
+bool QT_PCL_Segmentation::BayesTest(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud)
+{
+	int index = 0;
+	int successCount = 0, failCount = 0;
+	double threshold = this->skelCloud->is_dense;
+	for (int i = 0; i < this->branchNum; ++i)
+	{
+		double p_X_omega = 0;
+		for (int j = 0; j < this->branchLen[i]; ++j)
+		{
+			float *p_X_theta = this->skelCloud->points[index].data;
+			double p_K_G = this->skelCloud->points[index].x+ this->skelCloud->points[index].y+ this->skelCloud->points[index].z;
+			p_X_omega += *p_X_theta * p_K_G;
+			if (p_X_omega > threshold) { this->connectSkel(i, j, cloud); successCount++; }
+			else { failCount++; }
+			index++;
+		}
+	}
+	return (successCount>failCount);
 }
 
 void QT_PCL_Segmentation::BayesSkel()
