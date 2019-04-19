@@ -31,6 +31,8 @@ private:
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
 	std::vector<int> tag;
+	pcl::PointXYZ midPoint;
+	double skelScale;
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr skelCloud;
 	int skelFlag;
@@ -51,6 +53,7 @@ private:
 	int colorCloudIndex;
 	void correctCenter(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
 	double distance(pcl::PointXYZ a, pcl::PointXYZ b, int model = 1);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr normalize(pcl::PointCloud<pcl::PointXYZ>::Ptr);//标准化函数
 
 private slots:
 	void showDemo();
@@ -63,6 +66,8 @@ private slots:
 
 	//void clustering(int num);
 	void kmeans();
+	void normalizeOfSkel();
+
 
 	bool skelParam(std::string params, int mode=1);
 	void drawSkel();
@@ -71,4 +76,5 @@ private slots:
 	void clearPointCloud();
 	void resetPointCloud();
 	void KNNsmooth();
+
 };

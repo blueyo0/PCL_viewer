@@ -29,6 +29,7 @@ class Ui_QT_PCL_SegmentationClass
 {
 public:
     QAction *actionopen;
+    QAction *actionnormalize;
     QWidget *centralWidget;
     QPushButton *showButton;
     QVTKWidget *qvtkWidget;
@@ -75,6 +76,8 @@ public:
         QT_PCL_SegmentationClass->resize(1659, 935);
         actionopen = new QAction(QT_PCL_SegmentationClass);
         actionopen->setObjectName(QStringLiteral("actionopen"));
+        actionnormalize = new QAction(QT_PCL_SegmentationClass);
+        actionnormalize->setObjectName(QStringLiteral("actionnormalize"));
         centralWidget = new QWidget(QT_PCL_SegmentationClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         showButton = new QPushButton(centralWidget);
@@ -240,6 +243,7 @@ public:
 
         menuBar->addAction(menufile->menuAction());
         menufile->addAction(actionopen);
+        menufile->addAction(actionnormalize);
 
         retranslateUi(QT_PCL_SegmentationClass);
 
@@ -250,6 +254,7 @@ public:
     {
         QT_PCL_SegmentationClass->setWindowTitle(QApplication::translate("QT_PCL_SegmentationClass", "QT_PCL_Segmentation", nullptr));
         actionopen->setText(QApplication::translate("QT_PCL_SegmentationClass", "open", nullptr));
+        actionnormalize->setText(QApplication::translate("QT_PCL_SegmentationClass", "normalize", nullptr));
         showButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "test", nullptr));
         segButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "over-seg", nullptr));
         drawButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "L1-medial", nullptr));

@@ -39,6 +39,7 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	this->c = -1 * ui.cValue->toPlainText().toDouble(&ok);
 	//连接按钮	
 	connect(ui.actionopen, SIGNAL(triggered()), this, SLOT(onOpen()));
+	connect(ui.actionnormalize, SIGNAL(triggered()), this, SLOT(normalizeOfSkel()));
 
 	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(kmeans()));
 	connect(ui.segButton_2, SIGNAL(clicked()), this, SLOT(segmentation()));
@@ -357,6 +358,7 @@ void QT_PCL_Segmentation::kmeans() {
 	std::vector<pcl::PointXYZ> center;
 	std::vector<RGB> clusterColor(num, {0,0,0});
 	std::vector<int> clusterSize(num,0);
+	this->tag.clear();
 	this->tag = std::vector<int>(cloud->points.size(),-1);
 	//³õÊ¼»¯num¸ö´ØÐÄ
 	ui.InfoText->append("\ndefault centers choosing start");
@@ -528,7 +530,7 @@ bool QT_PCL_Segmentation::skelParam(std::string params, int mode)
 							selectCloud->points.push_back(pt);
 					}
 					this->skelCloud->points.push_back(median(selectCloud));
-					if(mode==1) Sleep(680);
+					//if(mode==1) Sleep(680);
 				}				
 			}			
 		}
@@ -552,7 +554,7 @@ bool QT_PCL_Segmentation::skelParam(std::string params, int mode)
 				pos[1] *= 0.98 + 0.04*rand() / (RAND_MAX + 1.0);
 				pos[2] *= 0.98 + 0.04*rand() / (RAND_MAX + 1.0);
 				this->skelCloud->push_back(pcl::PointXYZ(pos[0], pos[1], pos[2]));
-				if(j<10 && i<10 && mode==1) Sleep(680);
+				//if(j<10 && i<10 && mode==1) Sleep(680);
 			}
 			in.get(buffer, 4);//¶ÁÈ¡\tab
 		}
@@ -806,4 +808,59 @@ void QT_PCL_Segmentation::BayesSkel()
 	}
 
 	ui.qvtkWidget->update();
+}
+
+
+
+pcl::PointCloud<pcl::PointXYZ>::Ptr QT_PCL_Segmentation::normalize(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud) {
+	pcl::PointXYZ maxValue, minValue, midValue, scaleValue;
+	double scale = 1.0;
+	maxValue = inCloud->points[0];
+	minValue = inCloud->points[0];
+	//find max and min
+	for (pcl::PointXYZ pt : inCloud->points) {
+		maxValue.x = (pt.x > maxValue.x) ? pt.x : maxValue.x;
+		maxValue.y = (pt.y > maxValue.y) ? pt.y : maxValue.y;
+		maxValue.z = (pt.z > maxValue.z) ? pt.z : maxValue.z;
+		minValue.x = (pt.x < minValue.x) ? pt.x : minValue.x;
+		minValue.y = (pt.y < minValue.y) ? pt.y : minValue.y;
+		minValue.z = (pt.z < minValue.z) ? pt.z : minValue.z;
+	}
+	//find the middle value
+	midValue.x = (maxValue.x + minValue.x) / 2;
+	midValue.y = (maxValue.y + minValue.y) / 2;
+	midValue.z = (maxValue.z + minValue.z) / 2;
+	scaleValue.x = (maxValue.x - minValue.x) / 2;
+	scaleValue.y = (maxValue.y - minValue.y) / 2;
+	scaleValue.z = (maxValue.z - minValue.z) / 2;
+	//compute the scale
+	scale = scaleValue.x;
+	if (scaleValue.y >= scale) scale = scaleValue.y;
+	if (scaleValue.z >= scale) scale = scaleValue.z;
+	scale /= 75.66;
+
+	this->skelScale = scale;
+	this->midPoint = midValue;
+
+	for (pcl::PointXYZ pt : inCloud->points) {
+		pt.x -= midValue.x;
+		pt.y -= midValue.y;
+		pt.z -= midValue.z;
+		pt.x /= scale;
+		pt.y /= scale;
+		pt.z /= scale;
+	}//move it to zero and scale in
+	return inCloud;
+}
+
+void QT_PCL_Segmentation::normalizeOfSkel() {
+	normalize(this->cloud);
+	for (pcl::PointXYZ pt : skelCloud->points) {
+		pt.x -= midPoint.x;
+		pt.y -= midPoint.y;
+		pt.z -= midPoint.z;
+		pt.x /= skelScale;
+		pt.y /= skelScale;
+		pt.z /= skelScale;
+	}//move it to zero and scale in
 }
