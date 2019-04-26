@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <windows.h>
+#include <string>
 
 #include <pcl/common/projection_matrix.h>
 #include <pcl/ModelCoefficients.h>
@@ -18,6 +19,13 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/segmentation/min_cut_segmentation.h>
+
+#include <pcl/io/io.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/io/obj_io.h>
+#include <pcl/PolygonMesh.h>
+#include <pcl/point_cloud.h>
+#include <pcl/io/vtk_lib_io.h>//loadPolygonFileOBJ所属头文件；
 
 class QT_PCL_Segmentation : public QMainWindow
 {
@@ -33,6 +41,11 @@ private:
 	std::vector<int> tag;
 	pcl::PointXYZ midPoint;
 	double skelScale;
+
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloudfiltered;
+	float vertex[10000][3];
+	int surface[10000][3];
+	void off_obj(std::string input);
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr skelCloud;
 	int skelFlag;
@@ -54,11 +67,14 @@ private:
 	void correctCenter(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
 	double distance(pcl::PointXYZ a, pcl::PointXYZ b, int model = 1);
 	pcl::PointCloud<pcl::PointXYZ>::Ptr normalize(pcl::PointCloud<pcl::PointXYZ>::Ptr);//标准化函数
+	void offReader(std::string filename);
+
 
 private slots:
 	void showDemo();
 	void showPCL();
 	void onOpen();
+	void off_ply();
 	void segmentation();
 	void colorByAxis();
 	void color(pcl::PointCloud<pcl::PointXYZ>::Ptr,int,int ,int);
@@ -66,6 +82,8 @@ private slots:
 
 	//void clustering(int num);
 	void kmeans();
+	void noise();
+	void outlier();
 	void normalizeOfSkel();
 
 
@@ -76,5 +94,5 @@ private slots:
 	void clearPointCloud();
 	void resetPointCloud();
 	void KNNsmooth();
-
+	void onOff();
 };

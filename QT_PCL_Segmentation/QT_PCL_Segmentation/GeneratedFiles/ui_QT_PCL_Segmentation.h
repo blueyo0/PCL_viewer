@@ -30,6 +30,7 @@ class Ui_QT_PCL_SegmentationClass
 public:
     QAction *actionopen;
     QAction *actionnormalize;
+    QAction *actionoff_ply;
     QWidget *centralWidget;
     QPushButton *showButton;
     QVTKWidget *qvtkWidget;
@@ -64,6 +65,11 @@ public:
     QPushButton *resetButton;
     QTextEdit *K_3;
     QLabel *label_15;
+    QLabel *label_16;
+    QTextEdit *noise;
+    QPushButton *noiseButton;
+    QTextEdit *outlier;
+    QPushButton *outlierButton;
     QMenuBar *menuBar;
     QMenu *menufile;
     QToolBar *mainToolBar;
@@ -78,6 +84,8 @@ public:
         actionopen->setObjectName(QStringLiteral("actionopen"));
         actionnormalize = new QAction(QT_PCL_SegmentationClass);
         actionnormalize->setObjectName(QStringLiteral("actionnormalize"));
+        actionoff_ply = new QAction(QT_PCL_SegmentationClass);
+        actionoff_ply->setObjectName(QStringLiteral("actionoff_ply"));
         centralWidget = new QWidget(QT_PCL_SegmentationClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         showButton = new QPushButton(centralWidget);
@@ -89,7 +97,7 @@ public:
         showButton->setFont(font);
         qvtkWidget = new QVTKWidget(centralWidget);
         qvtkWidget->setObjectName(QStringLiteral("qvtkWidget"));
-        qvtkWidget->setGeometry(QRect(0, 0, 1341, 911));
+        qvtkWidget->setGeometry(QRect(0, -20, 1341, 911));
         segButton = new QPushButton(centralWidget);
         segButton->setObjectName(QStringLiteral("segButton"));
         segButton->setGeometry(QRect(1360, 170, 91, 61));
@@ -166,23 +174,23 @@ public:
         label_8->setGeometry(QRect(1350, 230, 191, 31));
         Radius_2 = new QTextEdit(centralWidget);
         Radius_2->setObjectName(QStringLiteral("Radius_2"));
-        Radius_2->setGeometry(QRect(1390, 340, 51, 31));
+        Radius_2->setGeometry(QRect(1390, 320, 51, 31));
         Radius_2->setFont(font4);
         label_9 = new QLabel(centralWidget);
         label_9->setObjectName(QStringLiteral("label_9"));
-        label_9->setGeometry(QRect(1350, 310, 301, 31));
+        label_9->setGeometry(QRect(1350, 290, 301, 31));
         K_1 = new QTextEdit(centralWidget);
         K_1->setObjectName(QStringLiteral("K_1"));
-        K_1->setGeometry(QRect(1500, 340, 51, 31));
+        K_1->setGeometry(QRect(1500, 320, 51, 31));
         K_1->setFont(font4);
         label_10 = new QLabel(centralWidget);
         label_10->setObjectName(QStringLiteral("label_10"));
-        label_10->setGeometry(QRect(1360, 340, 16, 31));
+        label_10->setGeometry(QRect(1360, 320, 16, 31));
         label_10->setFont(font3);
         label_10->setContextMenuPolicy(Qt::DefaultContextMenu);
         label_11 = new QLabel(centralWidget);
         label_11->setObjectName(QStringLiteral("label_11"));
-        label_11->setGeometry(QRect(1470, 340, 16, 31));
+        label_11->setGeometry(QRect(1470, 320, 16, 31));
         label_11->setFont(font3);
         label_11->setContextMenuPolicy(Qt::DefaultContextMenu);
         segButton_3 = new QPushButton(centralWidget);
@@ -191,23 +199,23 @@ public:
         segButton_3->setFont(font1);
         label_12 = new QLabel(centralWidget);
         label_12->setObjectName(QStringLiteral("label_12"));
-        label_12->setGeometry(QRect(1350, 390, 281, 31));
+        label_12->setGeometry(QRect(1350, 350, 281, 31));
         K_2 = new QTextEdit(centralWidget);
         K_2->setObjectName(QStringLiteral("K_2"));
-        K_2->setGeometry(QRect(1450, 420, 51, 31));
+        K_2->setGeometry(QRect(1450, 380, 51, 31));
         K_2->setFont(font4);
         label_14 = new QLabel(centralWidget);
         label_14->setObjectName(QStringLiteral("label_14"));
-        label_14->setGeometry(QRect(1360, 420, 81, 31));
+        label_14->setGeometry(QRect(1360, 380, 81, 31));
         label_14->setFont(font3);
         label_14->setContextMenuPolicy(Qt::DefaultContextMenu);
         cValue = new QTextEdit(centralWidget);
         cValue->setObjectName(QStringLiteral("cValue"));
-        cValue->setGeometry(QRect(1590, 340, 51, 31));
+        cValue->setGeometry(QRect(1590, 320, 51, 31));
         cValue->setFont(font4);
         label_13 = new QLabel(centralWidget);
         label_13->setObjectName(QStringLiteral("label_13"));
-        label_13->setGeometry(QRect(1570, 340, 16, 31));
+        label_13->setGeometry(QRect(1570, 320, 16, 31));
         label_13->setFont(font3);
         label_13->setContextMenuPolicy(Qt::DefaultContextMenu);
         drawButton_3 = new QPushButton(centralWidget);
@@ -220,13 +228,32 @@ public:
         resetButton->setFont(font);
         K_3 = new QTextEdit(centralWidget);
         K_3->setObjectName(QStringLiteral("K_3"));
-        K_3->setGeometry(QRect(1590, 420, 51, 31));
+        K_3->setGeometry(QRect(1590, 380, 51, 31));
         K_3->setFont(font4);
         label_15 = new QLabel(centralWidget);
         label_15->setObjectName(QStringLiteral("label_15"));
-        label_15->setGeometry(QRect(1510, 420, 71, 31));
+        label_15->setGeometry(QRect(1510, 380, 71, 31));
         label_15->setFont(font3);
         label_15->setContextMenuPolicy(Qt::DefaultContextMenu);
+        label_16 = new QLabel(centralWidget);
+        label_16->setObjectName(QStringLiteral("label_16"));
+        label_16->setGeometry(QRect(1350, 410, 281, 31));
+        noise = new QTextEdit(centralWidget);
+        noise->setObjectName(QStringLiteral("noise"));
+        noise->setGeometry(QRect(1360, 440, 51, 31));
+        noise->setFont(font4);
+        noiseButton = new QPushButton(centralWidget);
+        noiseButton->setObjectName(QStringLiteral("noiseButton"));
+        noiseButton->setGeometry(QRect(1420, 440, 71, 31));
+        noiseButton->setFont(font1);
+        outlier = new QTextEdit(centralWidget);
+        outlier->setObjectName(QStringLiteral("outlier"));
+        outlier->setGeometry(QRect(1510, 440, 51, 31));
+        outlier->setFont(font4);
+        outlierButton = new QPushButton(centralWidget);
+        outlierButton->setObjectName(QStringLiteral("outlierButton"));
+        outlierButton->setGeometry(QRect(1570, 440, 71, 31));
+        outlierButton->setFont(font1);
         QT_PCL_SegmentationClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(QT_PCL_SegmentationClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
@@ -244,6 +271,7 @@ public:
         menuBar->addAction(menufile->menuAction());
         menufile->addAction(actionopen);
         menufile->addAction(actionnormalize);
+        menufile->addAction(actionoff_ply);
 
         retranslateUi(QT_PCL_SegmentationClass);
 
@@ -255,6 +283,7 @@ public:
         QT_PCL_SegmentationClass->setWindowTitle(QApplication::translate("QT_PCL_SegmentationClass", "QT_PCL_Segmentation", nullptr));
         actionopen->setText(QApplication::translate("QT_PCL_SegmentationClass", "open", nullptr));
         actionnormalize->setText(QApplication::translate("QT_PCL_SegmentationClass", "normalize", nullptr));
+        actionoff_ply->setText(QApplication::translate("QT_PCL_SegmentationClass", "off->ply", nullptr));
         showButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "test", nullptr));
         segButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "over-seg", nullptr));
         drawButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "L1-medial", nullptr));
@@ -318,6 +347,19 @@ public:
 "</style></head><body style=\" font-family:'004\346\226\271\346\255\243\345\217\244\351\232\266\347\256\200\344\275\223'; font-size:12pt; font-weight:400; font-style:normal;\">\n"
 "<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:'SimSun'; font-size:9pt;\">0.35</span></p></body></html>", nullptr));
         label_15->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt;\">repulsion u</span></p></body></html>", nullptr));
+        label_16->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">noise and outlier</span></p></body></html>", nullptr));
+        noise->setHtml(QApplication::translate("QT_PCL_SegmentationClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'004\346\226\271\346\255\243\345\217\244\351\232\266\347\256\200\344\275\223'; font-size:12pt; font-weight:400; font-style:normal;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:'SimSun'; font-size:9pt;\">50</span></p></body></html>", nullptr));
+        noiseButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "noise", nullptr));
+        outlier->setHtml(QApplication::translate("QT_PCL_SegmentationClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'004\346\226\271\346\255\243\345\217\244\351\232\266\347\256\200\344\275\223'; font-size:12pt; font-weight:400; font-style:normal;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:'SimSun'; font-size:9pt;\">10</span></p></body></html>", nullptr));
+        outlierButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "outlier", nullptr));
         menufile->setTitle(QApplication::translate("QT_PCL_SegmentationClass", "file", nullptr));
     } // retranslateUi
 

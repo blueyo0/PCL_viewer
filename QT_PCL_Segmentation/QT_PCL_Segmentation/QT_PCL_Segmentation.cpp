@@ -40,6 +40,7 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	//连接按钮	
 	connect(ui.actionopen, SIGNAL(triggered()), this, SLOT(onOpen()));
 	connect(ui.actionnormalize, SIGNAL(triggered()), this, SLOT(normalizeOfSkel()));
+	connect(ui.actionoff_ply, SIGNAL(triggered()), this, SLOT(onOff()));
 
 	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(kmeans()));
 	connect(ui.segButton_2, SIGNAL(clicked()), this, SLOT(segmentation()));
@@ -52,12 +53,16 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	connect(ui.clearButton, SIGNAL(clicked()), this, SLOT(clearPointCloud()));
 	connect(ui.showButton, SIGNAL(clicked()), this, SLOT(showPCL()));
 	connect(ui.resetButton, SIGNAL(clicked()), this, SLOT(resetPointCloud()));
+
+	connect(ui.noiseButton, SIGNAL(clicked()), this, SLOT(noise()));
+	connect(ui.outlierButton, SIGNAL(clicked()), this, SLOT(outlier()));
 }
 
 void QT_PCL_Segmentation::initialVtkWidget()
 {
 	cloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
 	skelCloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
+	cloudfiltered.reset(new pcl::PointCloud<pcl::PointXYZ>);
 	viewer.reset(new pcl::visualization::PCLVisualizer("viewer", false));
 	//viewer->addPointCloud(cloud, "cloud");
 
@@ -863,4 +868,199 @@ void QT_PCL_Segmentation::normalizeOfSkel() {
 		pt.y /= skelScale;
 		pt.z /= skelScale;
 	}//move it to zero and scale in
+}
+
+void QT_PCL_Segmentation::noise() {
+	int dx = ui.noise->toPlainText().toInt();
+	//showDemo();
+	cloudfiltered->points.resize(cloud->points.size());//将点云的cloud的size赋值给噪声
+	cloudfiltered->header = cloud->header;
+	cloudfiltered->width = cloud->width;
+	cloudfiltered->height = cloud->height;
+	boost::mt19937 rng;
+	rng.seed(static_cast<unsigned int>(time(0)));
+	boost::normal_distribution<> nd(0, 2);
+	boost::variate_generator<boost::mt19937&, boost::normal_distribution<>> var_nor(rng, nd);
+	//添加噪声
+	for (size_t point_i = 0; point_i < cloud->points.size(); ++point_i)
+	{
+		cloudfiltered->points[point_i].x = cloud->points[point_i].x + static_cast<float> (var_nor())/ dx;
+		cloudfiltered->points[point_i].y = cloud->points[point_i].y + static_cast<float> (var_nor())/ dx;
+		cloudfiltered->points[point_i].z = cloud->points[point_i].z + static_cast<float> (var_nor())/ dx;
+	}
+	viewer->removeAllPointClouds();
+	viewer->removePointCloud("cloudfiltered");
+	viewer->updatePointCloud(cloudfiltered, "cloudfiltered");
+	viewer->addPointCloud(cloudfiltered, "cloudfiltered");
+	//viewer->resetCamera();
+	this->color(cloudfiltered, 250, 140, 20);
+	//this->color(cloudfiltered, 255, 0, 0);
+}
+
+void QT_PCL_Segmentation::outlier() {
+	//showDemo();
+	srand((int)time(0));	
+	pcl::PointCloud<pcl::PointXYZ>::Ptr pointAddCloud(new pcl::PointCloud<pcl::PointXYZ>());
+	for (int i = 0; i < ui.outlier->toPlainText().toInt(); ++i) {
+		pcl::PointXYZ pt((0.5 * rand() / (RAND_MAX + 1.0) + 0.5)*0.8,
+						 (0.5 * rand() / (RAND_MAX + 1.0) + 0.5)*0.8,
+						 (0.5 * rand() / (RAND_MAX + 1.0) + 0.5)*0.8);
+		if (rand() / (RAND_MAX + 1.0) > 0.5) pt.x *= -1;
+		if (rand() / (RAND_MAX + 1.0) > 0.5) pt.y *= -1;
+		if (rand() / (RAND_MAX + 1.0) > 0.5) pt.z *= -1;
+		viewer->addSphere(pt, skelSize * 0.7, 0, 0, 135, "sphere" + std::to_string(i + 100));
+		pointAddCloud->points.push_back(pt);
+	}
+	viewer->removePointCloud("pointAddCloud");
+	viewer->updatePointCloud(pointAddCloud, "pointAddCloud");
+	viewer->addPointCloud(pointAddCloud, "pointAddCloud");
+	this->color(pointAddCloud, 0, 0, 255);
+
+
+	//viewer->resetCamera();
+	//this->color(cloud, 250, 140, 20);
+}
+
+void pcd_ply(std::string input) {
+	pcl::PCLPointCloud2 cloud;
+	if (pcl::io::loadPCDFile(input.substr(0, input.length() - 4) + ".pcd", cloud) < 0)
+	{
+		cout << "Error: cannot load the PCD file!!!" << endl;
+		return;
+	}
+	pcl::PLYWriter writer;
+	writer.write(input.substr(0, input.length() - 4) + ".ply", cloud, Eigen::Vector4f::Zero(), Eigen::Quaternionf::Identity(), true, true);
+}
+
+void obj_pcd(std::string input) {
+	pcl::PolygonMesh mesh;
+	pcl::io::loadPolygonFileOBJ(input.substr(0, input.length() - 4) + ".obj", mesh);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr converterCloud(new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::fromPCLPointCloud2(mesh.cloud, *converterCloud);
+	pcl::io::savePCDFileASCII(input.substr(0, input.length() - 4) + ".pcd", *converterCloud);
+}
+
+void QT_PCL_Segmentation::off_obj(std::string input)
+{
+	/*函数说明：读取off文件
+	 * */
+	char k;
+	int vertex_num;
+	int surface_num;
+	int other_num;
+	int i, j;
+	int s;
+	ifstream fin;
+	ofstream fout;
+	fin.open(input);
+	while (fin.fail())
+	{
+		cout << "Fail to open the file!" << endl;
+		exit(1);
+	}
+	fout.open(input.substr(0,input.length()-4)+".obj");
+	while (fout.fail())
+	{
+		cout << "Fail to open the fail!" << endl;
+		exit(1);
+	}
+	do
+	{
+		cout << fin.get();
+	} while (fin.get() != '\n');
+	fin >> vertex_num >> surface_num >> other_num;
+	cout << vertex_num;
+	for (i = 0; i < vertex_num; i++)
+	{
+		for (j = 0; j < 3; j++)
+		{
+			fin >> vertex[i][j];
+		}
+	}
+	for (i = 0; i < surface_num; i++)
+	{
+		fin >> s;
+		cout << s << endl;
+		for (j = 0; j < 3; j++)
+		{
+			fin >> surface[i][j];
+		}
+	}
+
+	for (i = 0; i < vertex_num; i++)
+	{
+		fout.put('v');
+		fout.put(' ');
+		for (j = 0; j < 3; j++)
+		{
+			fout << vertex[i][j];
+			fout.put(' ');
+		}
+		fout.put('\n');
+
+	}
+	fout.put('\n'); //注意控制换行
+
+	for (i = 0; i < surface_num; i++)
+	{
+		fout.put('f');
+		fout.put(' ');
+		for (j = 0; j < 3; j++)
+		{
+			fout << (surface[i][j] + 1);
+			fout.put(' ');
+		}
+		fout.put('\n');
+	}
+	fin.close();
+	fout.close();
+	//cout << "end" << endl;
+}
+
+void QT_PCL_Segmentation::off_ply() {
+	this->showDemo();
+	QString fileName = QFileDialog::getOpenFileName(this,
+		tr("Open off file"), ".",
+		tr("Open PCD files(*.off)"));
+	std::string file_name = fileName.toStdString();
+	off_obj(file_name);
+	obj_pcd(file_name);
+	pcd_ply(file_name);
+}
+
+void QT_PCL_Segmentation::offReader(std::string filename)
+{
+	this->cloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
+	ifstream in(filename);
+	char buffer[8];
+	char bufferChar;
+	int branchLenBuffer;
+	float pos[6];
+
+	int num = 0;
+	in.get(buffer, 5);//NOFF
+	in >> num >> branchLenBuffer;
+	for (int i = 0; i < num; i++)
+	{			
+		in >> pos[0] >> pos[1] >> pos[2]
+			>> pos[3] >> pos[4] >> pos[5];
+		this->cloud->points.push_back(pcl::PointXYZ(pos[0],pos[1],pos[2]));
+	}
+	pcl::PLYWriter writer;
+	writer.write(filename.substr(0,filename.length()-4)+".ply", *cloud);
+}
+
+void QT_PCL_Segmentation::onOff() {
+	QString fileName = QFileDialog::getOpenFileName(this,
+		tr("Open PointCloud"), ".",
+		tr("Open OFF files(*.off)"));
+	std::string file_name = fileName.toStdString();
+
+	this->offReader(file_name);
+
+	viewer->removePointCloud("cloud");
+	viewer->updatePointCloud(cloud, "cloud");
+	viewer->addPointCloud(cloud, "cloud");
+	viewer->resetCamera();
+	this->color(cloud, 250, 140, 20);
 }

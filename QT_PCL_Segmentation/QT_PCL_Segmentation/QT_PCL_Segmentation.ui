@@ -37,7 +37,7 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>0</y>
+      <y>-20</y>
       <width>1341</width>
       <height>911</height>
      </rect>
@@ -339,7 +339,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>1390</x>
-      <y>340</y>
+      <y>320</y>
       <width>51</width>
       <height>31</height>
      </rect>
@@ -362,7 +362,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>1350</x>
-      <y>310</y>
+      <y>290</y>
       <width>301</width>
       <height>31</height>
      </rect>
@@ -375,7 +375,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>1500</x>
-      <y>340</y>
+      <y>320</y>
       <width>51</width>
       <height>31</height>
      </rect>
@@ -398,7 +398,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>1360</x>
-      <y>340</y>
+      <y>320</y>
       <width>16</width>
       <height>31</height>
      </rect>
@@ -420,7 +420,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>1470</x>
-      <y>340</y>
+      <y>320</y>
       <width>16</width>
       <height>31</height>
      </rect>
@@ -461,7 +461,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>1350</x>
-      <y>390</y>
+      <y>350</y>
       <width>281</width>
       <height>31</height>
      </rect>
@@ -474,7 +474,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>1450</x>
-      <y>420</y>
+      <y>380</y>
       <width>51</width>
       <height>31</height>
      </rect>
@@ -497,7 +497,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>1360</x>
-      <y>420</y>
+      <y>380</y>
       <width>81</width>
       <height>31</height>
      </rect>
@@ -519,7 +519,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>1590</x>
-      <y>340</y>
+      <y>320</y>
       <width>51</width>
       <height>31</height>
      </rect>
@@ -542,7 +542,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>1570</x>
-      <y>340</y>
+      <y>320</y>
       <width>16</width>
       <height>31</height>
      </rect>
@@ -602,7 +602,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>1590</x>
-      <y>420</y>
+      <y>380</y>
       <width>51</width>
       <height>31</height>
      </rect>
@@ -625,7 +625,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>1510</x>
-      <y>420</y>
+      <y>380</y>
       <width>71</width>
       <height>31</height>
      </rect>
@@ -641,6 +641,103 @@ p, li { white-space: pre-wrap; }
     </property>
     <property name="text">
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;repulsion u&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_16">
+    <property name="geometry">
+     <rect>
+      <x>1350</x>
+      <y>410</y>
+      <width>281</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;noise and outlier&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QTextEdit" name="noise">
+    <property name="geometry">
+     <rect>
+      <x>1360</x>
+      <y>440</y>
+      <width>51</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>004方正古隶简体</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="html">
+     <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'004方正古隶简体'; font-size:12pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'SimSun'; font-size:9pt;&quot;&gt;50&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="noiseButton">
+    <property name="geometry">
+     <rect>
+      <x>1420</x>
+      <y>440</y>
+      <width>71</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>黑体</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>noise</string>
+    </property>
+   </widget>
+   <widget class="QTextEdit" name="outlier">
+    <property name="geometry">
+     <rect>
+      <x>1510</x>
+      <y>440</y>
+      <width>51</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>004方正古隶简体</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="html">
+     <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'004方正古隶简体'; font-size:12pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'SimSun'; font-size:9pt;&quot;&gt;10&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="outlierButton">
+    <property name="geometry">
+     <rect>
+      <x>1570</x>
+      <y>440</y>
+      <width>71</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>黑体</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>outlier</string>
     </property>
    </widget>
   </widget>
@@ -659,6 +756,7 @@ p, li { white-space: pre-wrap; }
     </property>
     <addaction name="actionopen"/>
     <addaction name="actionnormalize"/>
+    <addaction name="actionoff_ply"/>
    </widget>
    <addaction name="menufile"/>
   </widget>
@@ -679,6 +777,11 @@ p, li { white-space: pre-wrap; }
   <action name="actionnormalize">
    <property name="text">
     <string>normalize</string>
+   </property>
+  </action>
+  <action name="actionoff_ply">
+   <property name="text">
+    <string>off-&gt;ply</string>
    </property>
   </action>
  </widget>
