@@ -757,6 +757,7 @@ p, li { white-space: pre-wrap; }
     <addaction name="actionopen"/>
     <addaction name="actionnormalize"/>
     <addaction name="actionoff_ply"/>
+    <addaction name="actionsave_NOFF"/>
    </widget>
    <addaction name="menufile"/>
   </widget>
@@ -782,6 +783,11 @@ p, li { white-space: pre-wrap; }
   <action name="actionoff_ply">
    <property name="text">
     <string>off-&gt;ply</string>
+   </property>
+  </action>
+  <action name="actionsave_NOFF">
+   <property name="text">
+    <string>save NOFF</string>
    </property>
   </action>
  </widget>

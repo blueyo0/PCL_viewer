@@ -20,6 +20,12 @@
 #include <pcl/filters/passthrough.h>
 #include <pcl/segmentation/min_cut_segmentation.h>
 
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/surface/gp3.h>
+//#include <pcl/search/kdtree.h>
+//#include <pcl/kdtree/kdtree.h>
+#include <pcl/features/normal_3d.h>
+
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/obj_io.h>
@@ -37,6 +43,9 @@ public:
 private:
 	Ui::QT_PCL_SegmentationClass ui;
 
+	pcl::PointCloud<pcl::Normal>::Ptr normalCloud;
+
+	std::string cloudPath;
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
 	std::vector<int> tag;
 	pcl::PointXYZ midPoint;
@@ -66,9 +75,10 @@ private:
 	int colorCloudIndex;
 	void correctCenter(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
 	double distance(pcl::PointXYZ a, pcl::PointXYZ b, int model = 1);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr normalize(pcl::PointCloud<pcl::PointXYZ>::Ptr);//标准化函数
+	pcl::PointCloud<pcl::PointXYZ>::Ptr normalize(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, bool divMode = true);//标准化函数
 	void offReader(std::string filename);
-
+	void saveNoff(std::string filename);
+	void computeNormal();
 
 private slots:
 	void showDemo();
@@ -95,4 +105,5 @@ private slots:
 	void resetPointCloud();
 	void KNNsmooth();
 	void onOff();
+	void onSaveNoff();
 };

@@ -30,7 +30,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <IncludePath>D:\PCL\PCL 1.8.1\3rdParty\Boost\include\boost-1_64;D:\PCL\PCL 1.8.1\3rdParty\Eigen\eigen3;E:\downloading\VTK\VTK\include\vtk-8.0;D:\PCL\PCL 1.8.1\3rdParty\FLANN\include\flann;D:\PCL\PCL 1.8.1\3rdParty\Qhull\include;D:\PCL\PCL 1.8.1\include\pcl-1.8;$(IncludePath)</IncludePath>
+    <IncludePath>D:\PCL\PCL 1.8.1\3rdParty\Boost\include\boost-1_64;D:\PCL\PCL 1.8.1\3rdParty\Eigen\eigen3;E:\downloading\VTK\VTK\include\vtk-8.0;D:\PCL\PCL 1.8.1\3rdParty\FLANN\include;D:\PCL\PCL 1.8.1\3rdParty\FLANN\include\flann;D:\PCL\PCL 1.8.1\3rdParty\Qhull\include;D:\PCL\PCL 1.8.1\include\pcl-1.8;$(IncludePath)</IncludePath>
     <LibraryPath>D:\PCL\PCL 1.8.1\lib;D:\PCL\PCL 1.8.1\3rdParty\Boost\lib;D:\PCL\PCL 1.8.1\3rdParty\Qhull\lib;D:\PCL\PCL 1.8.1\3rdParty\FLANN\lib;E:\downloading\VTK\VTK\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

@@ -31,6 +31,7 @@ public:
     QAction *actionopen;
     QAction *actionnormalize;
     QAction *actionoff_ply;
+    QAction *actionsave_NOFF;
     QWidget *centralWidget;
     QPushButton *showButton;
     QVTKWidget *qvtkWidget;
@@ -86,6 +87,8 @@ public:
         actionnormalize->setObjectName(QStringLiteral("actionnormalize"));
         actionoff_ply = new QAction(QT_PCL_SegmentationClass);
         actionoff_ply->setObjectName(QStringLiteral("actionoff_ply"));
+        actionsave_NOFF = new QAction(QT_PCL_SegmentationClass);
+        actionsave_NOFF->setObjectName(QStringLiteral("actionsave_NOFF"));
         centralWidget = new QWidget(QT_PCL_SegmentationClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         showButton = new QPushButton(centralWidget);
@@ -272,6 +275,7 @@ public:
         menufile->addAction(actionopen);
         menufile->addAction(actionnormalize);
         menufile->addAction(actionoff_ply);
+        menufile->addAction(actionsave_NOFF);
 
         retranslateUi(QT_PCL_SegmentationClass);
 
@@ -284,6 +288,7 @@ public:
         actionopen->setText(QApplication::translate("QT_PCL_SegmentationClass", "open", nullptr));
         actionnormalize->setText(QApplication::translate("QT_PCL_SegmentationClass", "normalize", nullptr));
         actionoff_ply->setText(QApplication::translate("QT_PCL_SegmentationClass", "off->ply", nullptr));
+        actionsave_NOFF->setText(QApplication::translate("QT_PCL_SegmentationClass", "save NOFF", nullptr));
         showButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "test", nullptr));
         segButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "over-seg", nullptr));
         drawButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "L1-medial", nullptr));

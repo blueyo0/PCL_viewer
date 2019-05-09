@@ -13,8 +13,8 @@ VTK_MODULE_INIT(vtkInteractionStyle)
 #include <string>
 #include <fstream>
 
-#include<time.h>
-#include<stdlib.h>
+#include <time.h>
+#include <stdlib.h>
 #include <math.h>
 
 typedef struct RGB {
@@ -41,6 +41,7 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	connect(ui.actionopen, SIGNAL(triggered()), this, SLOT(onOpen()));
 	connect(ui.actionnormalize, SIGNAL(triggered()), this, SLOT(normalizeOfSkel()));
 	connect(ui.actionoff_ply, SIGNAL(triggered()), this, SLOT(onOff()));
+	connect(ui.actionsave_NOFF, SIGNAL(triggered()), this, SLOT(onSaveNoff()));
 
 	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(kmeans()));
 	connect(ui.segButton_2, SIGNAL(clicked()), this, SLOT(segmentation()));
@@ -63,6 +64,7 @@ void QT_PCL_Segmentation::initialVtkWidget()
 	cloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
 	skelCloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
 	cloudfiltered.reset(new pcl::PointCloud<pcl::PointXYZ>);
+	normalCloud.reset(new pcl::PointCloud<pcl::Normal>);
 	viewer.reset(new pcl::visualization::PCLVisualizer("viewer", false));
 	//viewer->addPointCloud(cloud, "cloud");
 
@@ -78,6 +80,7 @@ void QT_PCL_Segmentation::onOpen()
 		tr("Open PointCloud"), ".",
 		tr("Open PCD files(*.pcd *.ply)"));
 	std::string file_name = fileName.toStdString();
+	this->cloudPath = file_name;
 	this->modelSkelName = file_name.substr(0, file_name.length() - 4);
 	//this->modelSkelName += ".txt";
 
@@ -105,6 +108,7 @@ void QT_PCL_Segmentation::onOpen()
 				pcl::PCDReader reader;
 				reader.read<pcl::PointXYZ>(file_name, *cloud);
 			}
+			pcl::io::savePLYFileASCII(file_name.substr(0, file_name.length()-4)+".ply",*cloud);
 		}
 		else//PLY read 
 		{
@@ -114,7 +118,7 @@ void QT_PCL_Segmentation::onOpen()
 		//correctCenter(cloud);
 		//pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> single_color(cloud, 0, 255, 0);
 		
-		
+		computeNormal();
 
 		viewer->removePointCloud("cloud");
 		viewer->updatePointCloud(cloud, "cloud");
@@ -817,7 +821,7 @@ void QT_PCL_Segmentation::BayesSkel()
 
 
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr QT_PCL_Segmentation::normalize(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud) {
+pcl::PointCloud<pcl::PointXYZ>::Ptr QT_PCL_Segmentation::normalize(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, bool divMode) {
 	pcl::PointXYZ maxValue, minValue, midValue, scaleValue;
 	double scale = 1.0;
 	maxValue = inCloud->points[0];
@@ -842,11 +846,11 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr QT_PCL_Segmentation::normalize(pcl::PointClo
 	scale = scaleValue.x;
 	if (scaleValue.y >= scale) scale = scaleValue.y;
 	if (scaleValue.z >= scale) scale = scaleValue.z;
-	scale /= 75.66;
+	if(divMode) scale /= 75.66;
 
 	this->skelScale = scale;
 	this->midPoint = midValue;
-
+	int i = 0;
 	for (pcl::PointXYZ pt : inCloud->points) {
 		pt.x -= midValue.x;
 		pt.y -= midValue.y;
@@ -854,6 +858,8 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr QT_PCL_Segmentation::normalize(pcl::PointClo
 		pt.x /= scale;
 		pt.y /= scale;
 		pt.z /= scale;
+		inCloud->points[i] = pt;
+		i++;
 	}//move it to zero and scale in
 	return inCloud;
 }
@@ -1038,16 +1044,20 @@ void QT_PCL_Segmentation::offReader(std::string filename)
 	float pos[6];
 
 	int num = 0;
-	in.get(buffer, 5);//NOFF
-	in >> num >> branchLenBuffer;
+	in.get(bufferChar);//NOFF / OFF
+	if(bufferChar == 'N'){ in.get(buffer, 4); in >> num >> branchLenBuffer;}//NOFF
+	else{ in.get(buffer, 3); in >> num >> branchLenBuffer >> branchLenBuffer; }//OFF
+	
 	for (int i = 0; i < num; i++)
 	{			
-		in >> pos[0] >> pos[1] >> pos[2]
-			>> pos[3] >> pos[4] >> pos[5];
+		in >> pos[0] >> pos[1] >> pos[2];
+		if(bufferChar == 'N')
+			in >> pos[3] >> pos[4] >> pos[5];
 		this->cloud->points.push_back(pcl::PointXYZ(pos[0],pos[1],pos[2]));
 	}
 	pcl::PLYWriter writer;
-	writer.write(filename.substr(0,filename.length()-4)+".ply", *cloud);
+	//writer.write(filename.substr(0,filename.length()-4)+".ply", *cloud);
+	pcl::io::savePLYFileASCII(filename.substr(0, filename.length() - 4) + ".ply", *cloud);
 }
 
 void QT_PCL_Segmentation::onOff() {
@@ -1057,10 +1067,56 @@ void QT_PCL_Segmentation::onOff() {
 	std::string file_name = fileName.toStdString();
 
 	this->offReader(file_name);
+	//off_ply();
 
 	viewer->removePointCloud("cloud");
 	viewer->updatePointCloud(cloud, "cloud");
 	viewer->addPointCloud(cloud, "cloud");
 	viewer->resetCamera();
 	this->color(cloud, 250, 140, 20);
+}
+
+void QT_PCL_Segmentation::onSaveNoff() {
+	saveNoff(this->cloudPath);
+}
+
+void QT_PCL_Segmentation::saveNoff(std::string filename) {
+	//computeNormal();
+	ofstream out;
+	out.open(filename.substr(0,filename.length()-3)+"off", ios::trunc);
+	out << "NOFF" << endl;
+	out << this->cloud->points.size() << " " << 0 << endl;
+	this->cloud = normalize(this->cloud,false);
+	for (int i = 0; i < this->cloud->points.size(); ++i)
+	{
+		out << cloud->points[i].x << " " << cloud->points[i].y << " " << cloud->points[i].z << " "
+			<< -1 * normalCloud->points[i].normal_x << " "
+			<< -1 * normalCloud->points[i].normal_y << " "
+			<< -1 * normalCloud->points[i].normal_z << " "
+			<< endl;
+	}
+	out.close();
+}
+
+void QT_PCL_Segmentation::computeNormal() {
+	//计算法线
+	pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud(new pcl::PointCloud <pcl::PointXYZRGB>);
+	for (size_t i = 0; i < cloud->points.size(); ++i)
+	{
+		pcl::PointXYZRGB  pt;
+		pt.x = cloud->points[i].x;
+		pt.y = cloud->points[i].y;
+		pt.z = cloud->points[i].z;
+		pt.r = 250;
+		pt.g = 140;
+		pt.b = 20;
+		colored_cloud->push_back(pt);
+	}
+	pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
+	ne.setInputCloud(colored_cloud);
+	pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGB>());
+	ne.setSearchMethod(tree);
+	//pcl::PointCloud<pcl::Normal>::Ptr cloud_normals1(new pcl::PointCloud<pcl::Normal>);
+	ne.setRadiusSearch(0.05);
+	ne.compute(*this->normalCloud);
 }
