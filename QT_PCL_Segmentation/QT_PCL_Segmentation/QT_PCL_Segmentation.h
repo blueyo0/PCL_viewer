@@ -19,6 +19,7 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/segmentation/min_cut_segmentation.h>
+#include <pcl/filters/voxel_grid.h>
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/surface/gp3.h>
@@ -79,6 +80,7 @@ private:
 	void offReader(std::string filename);
 	void saveNoff(std::string filename);
 	void computeNormal();
+	void downSample(std::string path);
 
 private slots:
 	void showDemo();
@@ -106,4 +108,5 @@ private slots:
 	void KNNsmooth();
 	void onOff();
 	void onSaveNoff();
+	void onDownSample();
 };

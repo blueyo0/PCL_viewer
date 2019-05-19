@@ -42,6 +42,7 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	connect(ui.actionnormalize, SIGNAL(triggered()), this, SLOT(normalizeOfSkel()));
 	connect(ui.actionoff_ply, SIGNAL(triggered()), this, SLOT(onOff()));
 	connect(ui.actionsave_NOFF, SIGNAL(triggered()), this, SLOT(onSaveNoff()));
+	connect(ui.actiondown_sample, SIGNAL(triggered()), this, SLOT(onDownSample()));
 
 	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(kmeans()));
 	connect(ui.segButton_2, SIGNAL(clicked()), this, SLOT(segmentation()));
@@ -57,6 +58,7 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 
 	connect(ui.noiseButton, SIGNAL(clicked()), this, SLOT(noise()));
 	connect(ui.outlierButton, SIGNAL(clicked()), this, SLOT(outlier()));
+	connect(ui.downSampleButton, SIGNAL(clicked()), this, SLOT(onDownSample()));
 }
 
 void QT_PCL_Segmentation::initialVtkWidget()
@@ -116,9 +118,7 @@ void QT_PCL_Segmentation::onOpen()
 			yrd.read<pcl::PointXYZ>(file_name, *cloud);
 		}		
 		//correctCenter(cloud);
-		//pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> single_color(cloud, 0, 255, 0);
-		
-		computeNormal();
+		//pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> single_color(cloud, 0, 255, 0);		
 
 		viewer->removePointCloud("cloud");
 		viewer->updatePointCloud(cloud, "cloud");
@@ -574,9 +574,7 @@ bool QT_PCL_Segmentation::skelParam(std::string params, int mode)
 void QT_PCL_Segmentation::drawSkel()
 {
 	skelFlag = 1;
-	if (skelParam(this->modelSkelName)) skelSize = 0.01;
-	else skelSize = 0.001;
-
+	skelSize = ui.skelSizeValue->toPlainText().toDouble();
 	viewer->removeAllShapes();
 	pcl::ModelCoefficients cylinder_coeff;
 	cylinder_coeff.values.resize(7);
@@ -616,6 +614,12 @@ void QT_PCL_Segmentation::drawSkel()
 			ui.InfoText->append(QString::number(skelIndex));
 		}
 	}
+	Sleep(6800);
+	int pos = cloudPath.find_last_of('/');
+	std::string s(cloudPath.substr(pos + 1));
+	s = s.substr(0, s.length() - 4);
+	ui.InfoText->append("\n物体类别:\n");
+	ui.InfoText->append(QString::fromStdString(s));
 	ui.qvtkWidget->update();
 }
 
@@ -625,6 +629,7 @@ void QT_PCL_Segmentation::reDrawSkel()
 		skelParam(this->modelSkelName+"_2",2);
 	else
 		skelParam(this->modelSkelName,2);
+	skelSize = ui.skelSizeValue->toPlainText().toDouble();
 	viewer->removeAllShapes();
 	pcl::ModelCoefficients cylinder_coeff;
 	cylinder_coeff.values.resize(7);
@@ -649,6 +654,11 @@ void QT_PCL_Segmentation::reDrawSkel()
 			ui.InfoText->append(QString::number(skelIndex));
 		}
 	}
+	int pos = cloudPath.find_last_of('/');
+	std::string s(cloudPath.substr(pos + 1));
+	s = s.substr(0, s.length() - 4);
+	ui.InfoText->append("\n物体类别:\n");
+	ui.InfoText->append(QString::fromStdString(s));
 	ui.qvtkWidget->update();
 }
 
@@ -773,8 +783,7 @@ bool QT_PCL_Segmentation::BayesTest(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud)
 void QT_PCL_Segmentation::BayesSkel()
 {
 	skelFlag = 2;
-	if (skelParam(this->modelSkelName+"_2")) this->skelSize = 0.01;
-	else this->skelSize = 0.001;
+	skelSize = ui.skelSizeValue->toPlainText().toDouble();
 
 	viewer->removeAllShapes();
 	pcl::ModelCoefficients cylinder_coeff;
@@ -815,7 +824,11 @@ void QT_PCL_Segmentation::BayesSkel()
 			ui.InfoText->append(QString::number(skelIndex));
 		}
 	}
-
+	int pos = cloudPath.find_last_of('/');
+	std::string s(cloudPath.substr(pos + 1));
+	s = s.substr(0, s.length() - 4);
+	ui.InfoText->append("\n物体类别:\n");
+	ui.InfoText->append(QString::fromStdString(s));
 	ui.qvtkWidget->update();
 }
 
@@ -1081,7 +1094,7 @@ void QT_PCL_Segmentation::onSaveNoff() {
 }
 
 void QT_PCL_Segmentation::saveNoff(std::string filename) {
-	//computeNormal();
+	computeNormal();
 	ofstream out;
 	out.open(filename.substr(0,filename.length()-3)+"off", ios::trunc);
 	out << "NOFF" << endl;
@@ -1090,9 +1103,9 @@ void QT_PCL_Segmentation::saveNoff(std::string filename) {
 	for (int i = 0; i < this->cloud->points.size(); ++i)
 	{
 		out << cloud->points[i].x << " " << cloud->points[i].y << " " << cloud->points[i].z << " "
-			<< -1 * normalCloud->points[i].normal_x << " "
-			<< -1 * normalCloud->points[i].normal_y << " "
-			<< -1 * normalCloud->points[i].normal_z << " "
+			<< -1 * ((normalCloud->points[i].normal_x == NAN) ? 0.1 : normalCloud->points[i].normal_x) << " "
+			<< -1 * ((normalCloud->points[i].normal_y == NAN) ? -0.1 : normalCloud->points[i].normal_y) << " "
+			<< -1 * ((normalCloud->points[i].normal_z == NAN) ? 0.1 : normalCloud->points[i].normal_z) << " "
 			<< endl;
 	}
 	out.close();
@@ -1119,4 +1132,57 @@ void QT_PCL_Segmentation::computeNormal() {
 	//pcl::PointCloud<pcl::Normal>::Ptr cloud_normals1(new pcl::PointCloud<pcl::Normal>);
 	ne.setRadiusSearch(0.05);
 	ne.compute(*this->normalCloud);
+}
+
+void QT_PCL_Segmentation::onDownSample() {
+	downSample(cloudPath);
+
+	pcl::PCLPointCloud2 cloud2;
+	//pcl::PointCloud<Eigen::MatrixXf> cloud2;
+	Eigen::Vector4f origin;
+	Eigen::Quaternionf orientation;
+	int pcd_version;
+	int data_type;
+	unsigned int data_idx;
+	int offset = 0;
+	pcl::PCDReader rd;
+	std::string file_name = cloudPath.substr(0, cloudPath.length() - 4) + "_down.pcd";
+	this->cloudPath = file_name;
+	this->modelSkelName = file_name.substr(0, file_name.length() - 4);
+	rd.readHeader(file_name, cloud2, origin, orientation, pcd_version, data_type, data_idx);
+	if (data_type == 0)
+		pcl::io::loadPCDFile(file_name, *cloud);
+	else if (data_type == 2){
+		pcl::PCDReader reader;
+		reader.read<pcl::PointXYZ>(file_name, *cloud);
+	}
+	pcl::io::savePLYFileASCII(file_name.substr(0, file_name.length() - 4) + ".ply", *cloud);	
+	
+	clearPointCloud();
+	viewer->removePointCloud("cloud");
+	viewer->updatePointCloud(cloud, "cloud");
+	viewer->addPointCloud(cloud, "cloud");
+	viewer->resetCamera();
+	this->color(cloud, 250, 140, 20);
+}
+
+void QT_PCL_Segmentation::downSample(std::string path) {
+	pcl::PCLPointCloud2::Ptr plyCloud(new pcl::PCLPointCloud2());
+	pcl::PCLPointCloud2::Ptr cloud_filtered(new pcl::PCLPointCloud2());
+
+	// Fill in the cloud data
+	pcl::PLYReader reader;
+	// Replace the path below with the path where you saved your file
+	reader.read(path, *plyCloud); // Remember to download the file first!
+
+	// Create the filtering object
+	pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
+	sor.setInputCloud(plyCloud);
+	float num = ui.leafSize->toPlainText().toFloat();
+	sor.setLeafSize(num, num, num);
+	sor.filter(*cloud_filtered);
+
+	pcl::PCDWriter writer;
+	writer.write(path.substr(0,path.length()-4)+"_down.pcd", *cloud_filtered,
+		Eigen::Vector4f::Zero(), Eigen::Quaternionf::Identity(), false);
 }

@@ -32,6 +32,7 @@ public:
     QAction *actionnormalize;
     QAction *actionoff_ply;
     QAction *actionsave_NOFF;
+    QAction *actiondown_sample;
     QWidget *centralWidget;
     QPushButton *showButton;
     QVTKWidget *qvtkWidget;
@@ -71,6 +72,11 @@ public:
     QPushButton *noiseButton;
     QTextEdit *outlier;
     QPushButton *outlierButton;
+    QLabel *label_17;
+    QTextEdit *leafSize;
+    QPushButton *downSampleButton;
+    QTextEdit *skelSizeValue;
+    QLabel *label_18;
     QMenuBar *menuBar;
     QMenu *menufile;
     QToolBar *mainToolBar;
@@ -89,6 +95,8 @@ public:
         actionoff_ply->setObjectName(QStringLiteral("actionoff_ply"));
         actionsave_NOFF = new QAction(QT_PCL_SegmentationClass);
         actionsave_NOFF->setObjectName(QStringLiteral("actionsave_NOFF"));
+        actiondown_sample = new QAction(QT_PCL_SegmentationClass);
+        actiondown_sample->setObjectName(QStringLiteral("actiondown_sample"));
         centralWidget = new QWidget(QT_PCL_SegmentationClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         showButton = new QPushButton(centralWidget);
@@ -114,10 +122,10 @@ public:
         drawButton->setFont(font1);
         InfoText = new QTextEdit(centralWidget);
         InfoText->setObjectName(QStringLiteral("InfoText"));
-        InfoText->setGeometry(QRect(1360, 510, 291, 291));
+        InfoText->setGeometry(QRect(1360, 610, 291, 191));
         label_2 = new QLabel(centralWidget);
         label_2->setObjectName(QStringLiteral("label_2"));
-        label_2->setGeometry(QRect(1350, 480, 111, 31));
+        label_2->setGeometry(QRect(1350, 570, 111, 31));
         drawButton_2 = new QPushButton(centralWidget);
         drawButton_2->setObjectName(QStringLiteral("drawButton_2"));
         drawButton_2->setGeometry(QRect(1460, 60, 91, 61));
@@ -132,7 +140,7 @@ public:
         clearButton->setFont(font);
         label_3 = new QLabel(centralWidget);
         label_3->setObjectName(QStringLiteral("label_3"));
-        label_3->setGeometry(QRect(1350, 20, 151, 31));
+        label_3->setGeometry(QRect(1350, 20, 141, 31));
         label_4 = new QLabel(centralWidget);
         label_4->setObjectName(QStringLiteral("label_4"));
         label_4->setGeometry(QRect(1350, 130, 111, 31));
@@ -257,6 +265,24 @@ public:
         outlierButton->setObjectName(QStringLiteral("outlierButton"));
         outlierButton->setGeometry(QRect(1570, 440, 71, 31));
         outlierButton->setFont(font1);
+        label_17 = new QLabel(centralWidget);
+        label_17->setObjectName(QStringLiteral("label_17"));
+        label_17->setGeometry(QRect(1350, 470, 281, 31));
+        leafSize = new QTextEdit(centralWidget);
+        leafSize->setObjectName(QStringLiteral("leafSize"));
+        leafSize->setGeometry(QRect(1360, 500, 131, 31));
+        leafSize->setFont(font4);
+        downSampleButton = new QPushButton(centralWidget);
+        downSampleButton->setObjectName(QStringLiteral("downSampleButton"));
+        downSampleButton->setGeometry(QRect(1530, 500, 111, 31));
+        downSampleButton->setFont(font1);
+        skelSizeValue = new QTextEdit(centralWidget);
+        skelSizeValue->setObjectName(QStringLiteral("skelSizeValue"));
+        skelSizeValue->setGeometry(QRect(1590, 20, 61, 31));
+        skelSizeValue->setFont(font4);
+        label_18 = new QLabel(centralWidget);
+        label_18->setObjectName(QStringLiteral("label_18"));
+        label_18->setGeometry(QRect(1560, 20, 31, 31));
         QT_PCL_SegmentationClass->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(QT_PCL_SegmentationClass);
         menuBar->setObjectName(QStringLiteral("menuBar"));
@@ -276,6 +302,7 @@ public:
         menufile->addAction(actionnormalize);
         menufile->addAction(actionoff_ply);
         menufile->addAction(actionsave_NOFF);
+        menufile->addAction(actiondown_sample);
 
         retranslateUi(QT_PCL_SegmentationClass);
 
@@ -289,6 +316,7 @@ public:
         actionnormalize->setText(QApplication::translate("QT_PCL_SegmentationClass", "normalize", nullptr));
         actionoff_ply->setText(QApplication::translate("QT_PCL_SegmentationClass", "off->ply", nullptr));
         actionsave_NOFF->setText(QApplication::translate("QT_PCL_SegmentationClass", "save NOFF", nullptr));
+        actiondown_sample->setText(QApplication::translate("QT_PCL_SegmentationClass", "down sample", nullptr));
         showButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "test", nullptr));
         segButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "over-seg", nullptr));
         drawButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "L1-medial", nullptr));
@@ -365,6 +393,19 @@ public:
 "</style></head><body style=\" font-family:'004\346\226\271\346\255\243\345\217\244\351\232\266\347\256\200\344\275\223'; font-size:12pt; font-weight:400; font-style:normal;\">\n"
 "<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:'SimSun'; font-size:9pt;\">10</span></p></body></html>", nullptr));
         outlierButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "outlier", nullptr));
+        label_17->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">down sample</span></p></body></html>", nullptr));
+        leafSize->setHtml(QApplication::translate("QT_PCL_SegmentationClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'004\346\226\271\346\255\243\345\217\244\351\232\266\347\256\200\344\275\223'; font-size:12pt; font-weight:400; font-style:normal;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:'SimSun'; font-size:9pt;\">0.02</span></p></body></html>", nullptr));
+        downSampleButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "downSample", nullptr));
+        skelSizeValue->setHtml(QApplication::translate("QT_PCL_SegmentationClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'004\346\226\271\346\255\243\345\217\244\351\232\266\347\256\200\344\275\223'; font-size:12pt; font-weight:400; font-style:normal;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:'SimSun'; font-size:9pt;\">0.01</span></p></body></html>", nullptr));
+        label_18->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p>size</p></body></html>", nullptr));
         menufile->setTitle(QApplication::translate("QT_PCL_SegmentationClass", "file", nullptr));
     } // retranslateUi
 
