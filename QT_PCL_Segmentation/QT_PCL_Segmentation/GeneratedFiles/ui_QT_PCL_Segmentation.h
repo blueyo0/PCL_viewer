@@ -33,6 +33,7 @@ public:
     QAction *actionoff_ply;
     QAction *actionsave_NOFF;
     QAction *actiondown_sample;
+    QAction *actionrandom_missing;
     QWidget *centralWidget;
     QPushButton *showButton;
     QVTKWidget *qvtkWidget;
@@ -97,6 +98,8 @@ public:
         actionsave_NOFF->setObjectName(QStringLiteral("actionsave_NOFF"));
         actiondown_sample = new QAction(QT_PCL_SegmentationClass);
         actiondown_sample->setObjectName(QStringLiteral("actiondown_sample"));
+        actionrandom_missing = new QAction(QT_PCL_SegmentationClass);
+        actionrandom_missing->setObjectName(QStringLiteral("actionrandom_missing"));
         centralWidget = new QWidget(QT_PCL_SegmentationClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         showButton = new QPushButton(centralWidget);
@@ -303,6 +306,7 @@ public:
         menufile->addAction(actionoff_ply);
         menufile->addAction(actionsave_NOFF);
         menufile->addAction(actiondown_sample);
+        menufile->addAction(actionrandom_missing);
 
         retranslateUi(QT_PCL_SegmentationClass);
 
@@ -317,6 +321,7 @@ public:
         actionoff_ply->setText(QApplication::translate("QT_PCL_SegmentationClass", "off->ply", nullptr));
         actionsave_NOFF->setText(QApplication::translate("QT_PCL_SegmentationClass", "save NOFF", nullptr));
         actiondown_sample->setText(QApplication::translate("QT_PCL_SegmentationClass", "down sample", nullptr));
+        actionrandom_missing->setText(QApplication::translate("QT_PCL_SegmentationClass", "random missing", nullptr));
         showButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "test", nullptr));
         segButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "over-seg", nullptr));
         drawButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "L1-medial", nullptr));

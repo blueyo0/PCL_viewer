@@ -43,7 +43,8 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	connect(ui.actionoff_ply, SIGNAL(triggered()), this, SLOT(onOff()));
 	connect(ui.actionsave_NOFF, SIGNAL(triggered()), this, SLOT(onSaveNoff()));
 	connect(ui.actiondown_sample, SIGNAL(triggered()), this, SLOT(onDownSample()));
-
+	connect(ui.actionrandom_missing, SIGNAL(triggered()), this, SLOT(onRandomMissing()));
+	
 	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(kmeans()));
 	connect(ui.segButton_2, SIGNAL(clicked()), this, SLOT(segmentation()));
 	connect(ui.segButton_3, SIGNAL(clicked()), this, SLOT(KNNsmooth()));
@@ -576,6 +577,7 @@ void QT_PCL_Segmentation::drawSkel()
 	skelFlag = 1;
 	skelSize = ui.skelSizeValue->toPlainText().toDouble();
 	viewer->removeAllShapes();
+	skelParam(this->modelSkelName, 2);
 	pcl::ModelCoefficients cylinder_coeff;
 	cylinder_coeff.values.resize(7);
 	int len = 0, vecIndex = 0;
@@ -786,6 +788,7 @@ void QT_PCL_Segmentation::BayesSkel()
 	skelSize = ui.skelSizeValue->toPlainText().toDouble();
 
 	viewer->removeAllShapes();
+	skelParam(this->modelSkelName + "_2", 2);
 	pcl::ModelCoefficients cylinder_coeff;
 	cylinder_coeff.values.resize(7);
 	int len = 0, vecIndex = 0;
@@ -1186,3 +1189,21 @@ void QT_PCL_Segmentation::downSample(std::string path) {
 	writer.write(path.substr(0,path.length()-4)+"_down.pcd", *cloud_filtered,
 		Eigen::Vector4f::Zero(), Eigen::Quaternionf::Identity(), false);
 }
+
+void QT_PCL_Segmentation::onRandomMissing() {
+	pcl::PointCloud <pcl::PointXYZ>::Ptr missingCloud(new pcl::PointCloud <pcl::PointXYZ>);
+	for (int i = 1; i < 5; ++i) {
+		missingCloud->clear();
+		for (size_t i = 0; i < cloud->points.size(); ++i)
+		{
+			pcl::PointXYZ  pt;
+			pt.x = cloud->points[i].x;
+			pt.y = cloud->points[i].y;
+			pt.z = cloud->points[i].z;
+			if (rand() / (RAND_MAX + 1.0f) > 0.3)
+				missingCloud->push_back(pt);
+		}
+		pcl::io::savePLYFileASCII(this->cloudPath.substr(0, this->cloudPath.length() - 4) + "_miss"+ std::to_string(i) +".ply", *missingCloud);
+	}
+}
+

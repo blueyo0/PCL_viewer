@@ -81,6 +81,7 @@ private:
 	void saveNoff(std::string filename);
 	void computeNormal();
 	void downSample(std::string path);
+	
 
 private slots:
 	void showDemo();
@@ -109,4 +110,5 @@ private slots:
 	void onOff();
 	void onSaveNoff();
 	void onDownSample();
+	void onRandomMissing();
 };
