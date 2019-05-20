@@ -851,6 +851,7 @@ p, li { white-space: pre-wrap; }
     <addaction name="actionsave_NOFF"/>
     <addaction name="actiondown_sample"/>
     <addaction name="actionrandom_missing"/>
+    <addaction name="actionopen_txt"/>
    </widget>
    <addaction name="menufile"/>
   </widget>
@@ -891,6 +892,11 @@ p, li { white-space: pre-wrap; }
   <action name="actionrandom_missing">
    <property name="text">
     <string>random missing</string>
+   </property>
+  </action>
+  <action name="actionopen_txt">
+   <property name="text">
+    <string>open txt</string>
    </property>
   </action>
  </widget>

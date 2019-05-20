@@ -21,8 +21,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_QT_PCL_Segmentation_t {
-    QByteArrayData data[29];
-    char stringdata0[318];
+    QByteArrayData data[30];
+    char stringdata0[328];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -59,7 +59,8 @@ QT_MOC_LITERAL(24, 262, 9), // "KNNsmooth"
 QT_MOC_LITERAL(25, 272, 5), // "onOff"
 QT_MOC_LITERAL(26, 278, 10), // "onSaveNoff"
 QT_MOC_LITERAL(27, 289, 12), // "onDownSample"
-QT_MOC_LITERAL(28, 302, 15) // "onRandomMissing"
+QT_MOC_LITERAL(28, 302, 15), // "onRandomMissing"
+QT_MOC_LITERAL(29, 318, 9) // "onOpenTxt"
 
     },
     "QT_PCL_Segmentation\0showDemo\0\0showPCL\0"
@@ -70,7 +71,7 @@ QT_MOC_LITERAL(28, 302, 15) // "onRandomMissing"
     "params\0mode\0drawSkel\0reDrawSkel\0"
     "BayesSkel\0clearPointCloud\0resetPointCloud\0"
     "KNNsmooth\0onOff\0onSaveNoff\0onDownSample\0"
-    "onRandomMissing"
+    "onRandomMissing\0onOpenTxt"
 };
 #undef QT_MOC_LITERAL
 
@@ -80,7 +81,7 @@ static const uint qt_meta_data_QT_PCL_Segmentation[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-      24,   14, // methods
+      25,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -88,30 +89,31 @@ static const uint qt_meta_data_QT_PCL_Segmentation[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    0,  134,    2, 0x08 /* Private */,
-       3,    0,  135,    2, 0x08 /* Private */,
-       4,    0,  136,    2, 0x08 /* Private */,
-       5,    0,  137,    2, 0x08 /* Private */,
-       6,    0,  138,    2, 0x08 /* Private */,
-       7,    0,  139,    2, 0x08 /* Private */,
-       8,    4,  140,    2, 0x08 /* Private */,
-      10,    0,  149,    2, 0x08 /* Private */,
-      11,    0,  150,    2, 0x08 /* Private */,
-      12,    0,  151,    2, 0x08 /* Private */,
-      13,    0,  152,    2, 0x08 /* Private */,
-      14,    0,  153,    2, 0x08 /* Private */,
-      15,    2,  154,    2, 0x08 /* Private */,
-      15,    1,  159,    2, 0x28 /* Private | MethodCloned */,
-      19,    0,  162,    2, 0x08 /* Private */,
-      20,    0,  163,    2, 0x08 /* Private */,
-      21,    0,  164,    2, 0x08 /* Private */,
-      22,    0,  165,    2, 0x08 /* Private */,
-      23,    0,  166,    2, 0x08 /* Private */,
-      24,    0,  167,    2, 0x08 /* Private */,
-      25,    0,  168,    2, 0x08 /* Private */,
-      26,    0,  169,    2, 0x08 /* Private */,
-      27,    0,  170,    2, 0x08 /* Private */,
-      28,    0,  171,    2, 0x08 /* Private */,
+       1,    0,  139,    2, 0x08 /* Private */,
+       3,    0,  140,    2, 0x08 /* Private */,
+       4,    0,  141,    2, 0x08 /* Private */,
+       5,    0,  142,    2, 0x08 /* Private */,
+       6,    0,  143,    2, 0x08 /* Private */,
+       7,    0,  144,    2, 0x08 /* Private */,
+       8,    4,  145,    2, 0x08 /* Private */,
+      10,    0,  154,    2, 0x08 /* Private */,
+      11,    0,  155,    2, 0x08 /* Private */,
+      12,    0,  156,    2, 0x08 /* Private */,
+      13,    0,  157,    2, 0x08 /* Private */,
+      14,    0,  158,    2, 0x08 /* Private */,
+      15,    2,  159,    2, 0x08 /* Private */,
+      15,    1,  164,    2, 0x28 /* Private | MethodCloned */,
+      19,    0,  167,    2, 0x08 /* Private */,
+      20,    0,  168,    2, 0x08 /* Private */,
+      21,    0,  169,    2, 0x08 /* Private */,
+      22,    0,  170,    2, 0x08 /* Private */,
+      23,    0,  171,    2, 0x08 /* Private */,
+      24,    0,  172,    2, 0x08 /* Private */,
+      25,    0,  173,    2, 0x08 /* Private */,
+      26,    0,  174,    2, 0x08 /* Private */,
+      27,    0,  175,    2, 0x08 /* Private */,
+      28,    0,  176,    2, 0x08 /* Private */,
+      29,    0,  177,    2, 0x08 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
@@ -128,6 +130,7 @@ static const uint qt_meta_data_QT_PCL_Segmentation[] = {
     QMetaType::Void,
     QMetaType::Bool, 0x80000000 | 16, QMetaType::Int,   17,   18,
     QMetaType::Bool, 0x80000000 | 16,   17,
+    QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
@@ -174,6 +177,7 @@ void QT_PCL_Segmentation::qt_static_metacall(QObject *_o, QMetaObject::Call _c, 
         case 21: _t->onSaveNoff(); break;
         case 22: _t->onDownSample(); break;
         case 23: _t->onRandomMissing(); break;
+        case 24: _t->onOpenTxt(); break;
         default: ;
         }
     }
@@ -204,13 +208,13 @@ int QT_PCL_Segmentation::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 24)
+        if (_id < 25)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 24;
+        _id -= 25;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 24)
+        if (_id < 25)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 24;
+        _id -= 25;
     }
     return _id;
 }

@@ -44,6 +44,8 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	connect(ui.actionsave_NOFF, SIGNAL(triggered()), this, SLOT(onSaveNoff()));
 	connect(ui.actiondown_sample, SIGNAL(triggered()), this, SLOT(onDownSample()));
 	connect(ui.actionrandom_missing, SIGNAL(triggered()), this, SLOT(onRandomMissing()));
+	connect(ui.actionopen_txt, SIGNAL(triggered()), this, SLOT(onOpenTxt()));
+
 	
 	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(kmeans()));
 	connect(ui.segButton_2, SIGNAL(clicked()), this, SLOT(segmentation()));
@@ -890,6 +892,13 @@ void QT_PCL_Segmentation::normalizeOfSkel() {
 		pt.y /= skelScale;
 		pt.z /= skelScale;
 	}//move it to zero and scale in
+
+	viewer->removeAllPointClouds();
+	viewer->removePointCloud("cloud");
+	viewer->updatePointCloud(cloud, "cloud");
+	viewer->addPointCloud(cloud, "cloud");
+	viewer->resetCamera();
+	this->color(cloud, 250, 140, 20);
 }
 
 void QT_PCL_Segmentation::noise() {
@@ -1207,3 +1216,27 @@ void QT_PCL_Segmentation::onRandomMissing() {
 	}
 }
 
+void QT_PCL_Segmentation::onOpenTxt() {
+	QString fileName = QFileDialog::getOpenFileName(this,
+		tr("Open PointCloud"), ".",
+		tr("Open PCD files(*.txt)"));
+	std::string file_name = fileName.toStdString();
+	this->cloud->points.clear();
+
+	ifstream in(file_name);
+
+	float pos[3];
+	for(int i=0;i<24000;++i)
+	{
+		in >> pos[0] >> pos[1] >> pos[2];
+		this->cloud->push_back(pcl::PointXYZ(pos[0], pos[1], pos[2]));
+	}
+
+	viewer->removePointCloud("cloud");
+	viewer->updatePointCloud(cloud, "cloud");
+	viewer->addPointCloud(cloud, "cloud");
+	viewer->resetCamera();
+	this->color(cloud, 250, 140, 20);
+
+	pcl::io::savePLYFileASCII(file_name.substr(0, file_name.length() - 4) + ".ply", *cloud);
+}

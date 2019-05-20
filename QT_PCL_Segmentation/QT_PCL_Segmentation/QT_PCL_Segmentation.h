@@ -111,4 +111,5 @@ private slots:
 	void onSaveNoff();
 	void onDownSample();
 	void onRandomMissing();
+	void onOpenTxt();
 };
