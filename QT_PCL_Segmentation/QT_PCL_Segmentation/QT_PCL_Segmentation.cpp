@@ -926,6 +926,7 @@ void QT_PCL_Segmentation::noise() {
 	//viewer->resetCamera();
 	this->color(cloudfiltered, 250, 140, 20);
 	//this->color(cloudfiltered, 255, 0, 0);
+	pcl::io::savePLYFileASCII(this->cloudPath.substr(0, this->cloudPath.length() - 4) + "_noise.ply", *cloudfiltered);
 }
 
 void QT_PCL_Segmentation::outlier() {
@@ -1240,3 +1241,8 @@ void QT_PCL_Segmentation::onOpenTxt() {
 
 	pcl::io::savePLYFileASCII(file_name.substr(0, file_name.length() - 4) + ".ply", *cloud);
 }
+
+void QT_PCL_Segmentation::onSavePLY() {
+	pcl::io::savePLYFileASCII(this->cloudPath.substr(0, this->cloudPath.length() - 4) + ".ply", *cloud);
+}
+
