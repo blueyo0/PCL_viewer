@@ -3,7 +3,8 @@
   <PropertyGroup />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <QTDIR>D:\Qt\Qt5.11.2\5.11.2\msvc2017_64</QTDIR>
-    <LocalDebuggerEnvironment>PATH=$(QTDIR)\bin%3b$(PATH)</LocalDebuggerEnvironment>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerEnvironment>PATH=$(QTDIR)\bin%3b$(PCL_ROOT)\bin%3b$(PCL_ROOT)\3rdParty\FLANN\bin%3b$(PCL_ROOT)\3rdParty\VTK\bin%3b$(PCL_ROOT)\Qhull\bin%3b$(PCL_ROOT)\3rdParty\OpenNI2\Tools%3b$(PATH)</LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <QTDIR>D:\Qt\Qt5.11.2\5.11.2\msvc2017_64</QTDIR>

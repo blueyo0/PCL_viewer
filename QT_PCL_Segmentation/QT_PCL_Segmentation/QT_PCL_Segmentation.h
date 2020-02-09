@@ -52,6 +52,9 @@ private:
 	pcl::PointXYZ midPoint;
 	double skelScale;
 
+	pcl::PointCloud<pcl::PointXYZ>::Ptr xCloud;
+	std::vector<int> xKind;
+
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloudfiltered;
 	float vertex[10000][3];
 	int surface[10000][3];
@@ -79,19 +82,27 @@ private:
 	pcl::PointCloud<pcl::PointXYZ>::Ptr normalize(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, bool divMode = true);//标准化函数
 	void offReader(std::string filename);
 	void saveNoff(std::string filename);
+	void l1_median();
 	void computeNormal();
 	void downSample(std::string path);
-	
+
+
+
 
 private slots:
-	void showDemo();
-	void showPCL();
-	void onOpen();
-	void off_ply();
-	void segmentation();
-	void colorByAxis();
-	void color(pcl::PointCloud<pcl::PointXYZ>::Ptr,int,int ,int);
-	void drawLine();
+	void showDemo(); // 弹出messageBox和InfoText输出,用于测试文本框和软件是否正常运行
+	void showPCL();  // 随机生成点云并显示，用于测试点云显示功能
+	void colorByAxis(); // 按坐标给点云上色，用于测试点云彩色显示功能
+	void drawLine(); // 从点云的[0]到[5]画线，用于测试骨架生成核心功能
+
+	void onOpen();   // 打开文件函数，支持pcd，ply
+	void onOpenTxt();// 打开txt文件
+	void onOpenOff(); // 打开off文件
+	// TO-DO： 将TXT集成到onOpen里
+
+	void off_ply();  // off文件转ply，支持off，noff
+	void segmentation(); // pcl库的min-cut 
+	void color(pcl::PointCloud<pcl::PointXYZ>::Ptr,int,int,int); // 点云上色函数
 
 	//void clustering(int num);
 	void kmeans();
@@ -104,13 +115,13 @@ private slots:
 	void drawSkel();
 	void reDrawSkel();
 	void BayesSkel();
+
+
 	void clearPointCloud();
 	void resetPointCloud();
 	void KNNsmooth();
-	void onOff();
 	void onSaveNoff();
 	void onDownSample();
 	void onRandomMissing();
-	void onOpenTxt();
 	void onSavePLY();
 };
