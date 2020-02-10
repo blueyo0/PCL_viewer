@@ -83,8 +83,15 @@ private:
 	void offReader(std::string filename);
 	void saveNoff(std::string filename);
 	void l1_median();
+	void updateNeighbors();
+	void updateOriginalNeighbors();
+	void updateSampleNeighbors();
+	void computeALLDirectionalityDegree();
+	double computeDirectionalityDegree(pcl::PointCloud<pcl::PointXYZ>::Ptr xcp, int index);
+
 	void computeNormal();
 	void downSample(std::string path);
+	void displaySampleCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr);
 
 
 
@@ -116,6 +123,7 @@ private slots:
 	void reDrawSkel();
 	void BayesSkel();
 
+	void onRandomSample();
 
 	void clearPointCloud();
 	void resetPointCloud();

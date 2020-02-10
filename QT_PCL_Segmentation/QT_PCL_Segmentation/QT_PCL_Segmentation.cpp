@@ -12,18 +12,32 @@ VTK_MODULE_INIT(vtkInteractionStyle)
 #include <vector>
 #include <string>
 #include <fstream>
+#include <algorithm>
 
 #include <time.h>
 #include <stdlib.h>
 #include <math.h>
 
-typedef struct RGB {
-	int r;
-	int g;
-	int b;
-}RGB;
+#include <Eigen/Dense>
+#include <Eigen/Eigenvalues>
+
+
+using namespace std;
+using namespace pcl;
+using namespace Eigen;
+
+namespace pcolor {
+	typedef struct RGB {
+		int r;
+		int g;
+		int b;
+	}RGB;
+}
 
 enum ptKind { Sample, Candidate, Bridge, Branch, Removed };
+
+typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PcPtr;
+typedef pcl::PointCloud<pcl::PointXYZ> Pc;
 
 QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	: QMainWindow(parent)
@@ -51,7 +65,7 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 
 	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(kmeans()));
 	connect(ui.segButton_2, SIGNAL(clicked()), this, SLOT(segmentation()));
-	connect(ui.segButton_3, SIGNAL(clicked()), this, SLOT(KNNsmooth()));
+	connect(ui.segButton_3, SIGNAL(clicked()), this, SLOT(onRandomSample()));
 
 	connect(ui.drawButton, SIGNAL(clicked()), this, SLOT(drawSkel()));
 	connect(ui.drawButton_2, SIGNAL(clicked()), this, SLOT(BayesSkel()));
@@ -68,7 +82,7 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 
 void QT_PCL_Segmentation::initialVtkWidget()
 {
-	cloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
+	cloud.reset(new PointCloud<PointXYZ>);
 	skelCloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
 	cloudfiltered.reset(new pcl::PointCloud<pcl::PointXYZ>);
 	normalCloud.reset(new pcl::PointCloud<pcl::Normal>);
@@ -138,18 +152,58 @@ void QT_PCL_Segmentation::onOpen()
 }
 
 // WLOP 采样函数
-pcl::PointCloud<pcl::PointXYZ>::Ptr WLOP(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud) {
+PcPtr WLOP(PcPtr inCloud, int num = 1000) {
 	return inCloud;
+}
+
+// 随机采样函数
+PcPtr randomSampling(PcPtr inCloud, int num=1000) {
+	PcPtr sampleCloud(new Pc);
+	int size = inCloud->points.size();
+	vector<int> nCard(size,0);
+	for (int i = 0; i < size; ++i) {
+		nCard[i] = i;
+	}
+	random_shuffle(nCard.begin(), nCard.begin()+size);
+	for (int i = 0; i < num; ++i) {
+		sampleCloud->points.push_back(inCloud->points[nCard[i]]);
+	}
+	return sampleCloud;
 }
 
 // 停止判断函数
 bool isAllSamplesIdentified(std::vector<int> kind) {
+	for (int k : kind) {
+		if (k == Candidate || k == Sample) {
+			return false;
+		}
+	}
 	return true;
 }
 
-// 计算有向度
-double computeDirectionalityDegree(pcl::PointXYZ pt) {
-	return 0.95;
+// 计算所有sample邻居
+void QT_PCL_Segmentation::updateNeighbors() {
+
+}
+
+// 计算所有sample的初始点云Q的邻居
+void QT_PCL_Segmentation::updateOriginalNeighbors() {
+
+}
+
+// 计算所有sample间的邻居
+void QT_PCL_Segmentation::updateSampleNeighbors() {
+
+}
+
+
+// 计算所有sample有向度
+void QT_PCL_Segmentation::computeALLDirectionalityDegree() {
+
+}
+
+double QT_PCL_Segmentation::computeDirectionalityDegree(pcl::PointCloud<pcl::PointXYZ>::Ptr xcp, int index) {
+
 }
 
 // 根据tracing 筛选branch
@@ -162,12 +216,21 @@ void QT_PCL_Segmentation::l1_median() {
 	// TO-DO：参数获取
 	int sampleNum = 1000;
 	// 初始采样
-	this->xCloud = WLOP(this->cloud);
-	this->xKind.resize(this->xCloud->size());
+	if (this->xCloud->points.size() < 0) {
+		this->xCloud = WLOP(this->cloud);
+	}
+	else {
+		ui.InfoText->append("采样已完成，按现有采样迭代");
+	}
+
+	this->xKind.clear();
+	this->xKind.resize(this->xCloud->size(), 0);
+	// 初始neighborhood size
+	int h0 = 0;
 	// 迭代收缩
 	while (!isAllSamplesIdentified(this->xKind)) {
 		for (size_t i = 0; i < this->xCloud->points.size(); ++i) {
-			double sigma = computeDirectionalityDegree(this->xCloud->points[i]);
+			double sigma = computeDirectionalityDegree(this->xCloud, i);
 			if (sigma > 0.9) {
 				// 加入candidate points
 				this->xKind[i] = 1;
@@ -366,6 +429,22 @@ void QT_PCL_Segmentation::color(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, int
 	ui.qvtkWidget->update();
 }
 
+void QT_PCL_Segmentation::displaySampleCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud) {
+	viewer->removePointCloud("sample_cloud");
+	viewer->addPointCloud(inCloud, "sample_cloud");
+	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 8, "sample_cloud");
+	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1,0,0, "sample_cloud");
+	ui.qvtkWidget->update();
+}
+
+void QT_PCL_Segmentation::onRandomSample() {
+	ui.InfoText->append("random sampling starts");
+	this->xCloud = randomSampling(this->cloud);
+	displaySampleCloud(this->xCloud);
+	color(this->xCloud, 155, 0, 0);
+	ui.InfoText->append("random sampling ends");
+}
+
 pcl::PointXYZ QT_PCL_Segmentation::median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud)
 {
 	pcl::PointXYZ center(0, 0, 0);
@@ -434,7 +513,7 @@ void QT_PCL_Segmentation::kmeans() {
 	int avg_clusterSize = cloud->points.size() / num;
 	int avg_clusterColor = 255 / num;
 	std::vector<pcl::PointXYZ> center;
-	std::vector<RGB> clusterColor(num, { 0,0,0 });
+	std::vector<pcolor::RGB> clusterColor(num, { 0,0,0 });
 	std::vector<int> clusterSize(num, 0);
 	this->tag.clear();
 	this->tag = std::vector<int>(cloud->points.size(), -1);
