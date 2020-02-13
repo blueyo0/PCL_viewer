@@ -9,11 +9,6 @@ VTK_MODULE_INIT(vtkInteractionStyle)
 #include <vtkRenderWindow.h>
 #include <vtkPolyDataMapper.h>
 
-#include <vector>
-#include <string>
-#include <fstream>
-#include <algorithm>
-
 #include <time.h>
 #include <stdlib.h>
 #include <math.h>
@@ -26,18 +21,7 @@ using namespace std;
 using namespace pcl;
 using namespace Eigen;
 
-namespace pcolor {
-	typedef struct RGB {
-		int r;
-		int g;
-		int b;
-	}RGB;
-}
 
-enum ptKind { Sample, Candidate, Bridge, Branch, Removed };
-
-typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PcPtr;
-typedef pcl::PointCloud<pcl::PointXYZ> Pc;
 
 QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	: QMainWindow(parent)
@@ -68,8 +52,8 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	connect(ui.segButton_3, SIGNAL(clicked()), this, SLOT(onRandomSample()));
 
 	connect(ui.drawButton, SIGNAL(clicked()), this, SLOT(drawSkel()));
-	connect(ui.drawButton_2, SIGNAL(clicked()), this, SLOT(BayesSkel()));
-	connect(ui.drawButton_3, SIGNAL(clicked()), this, SLOT(reDrawSkel()));
+	connect(ui.drawButton_6, SIGNAL(clicked()), this, SLOT(BayesSkel()));
+	// connect(ui.drawButton_3, SIGNAL(clicked()), this, SLOT(reDrawSkel()));
 
 	connect(ui.clearButton, SIGNAL(clicked()), this, SLOT(clearPointCloud()));
 	connect(ui.showButton, SIGNAL(clicked()), this, SLOT(showPCL()));
@@ -89,10 +73,43 @@ void QT_PCL_Segmentation::initialVtkWidget()
 	viewer.reset(new pcl::visualization::PCLVisualizer("viewer", false));
 	//viewer->addPointCloud(cloud, "cloud");
 
+	QWidget* titleWidget = new QWidget(this);
+	QWidget *visTitlebar = ui.visDock->titleBarWidget();
+	ui.visDock->setTitleBarWidget(titleWidget);
+	delete visTitlebar;
+
+	ui.visDock->setWidget(ui.qvtkWidget);
+	
 	ui.qvtkWidget->SetRenderWindow(viewer->getRenderWindow());
 	viewer->setupInteractor(ui.qvtkWidget->GetInteractor(), ui.qvtkWidget->GetRenderWindow());
 	ui.qvtkWidget->update();
+
+	this->tabifyDockWidget(ui.skelDock, ui.skelDock2);
 }
+
+/*
+void QT_PCL_Segmentation::resizeEvent(QResizeEvent *event)
+{
+	QSize size = event->size();
+	QSize old_size = event->oldSize();
+	int delta = size.width() - old_size.width();
+	if ( delta<10 && delta>0) {
+		return;
+	}
+	else if (delta < 0) {
+		ui.InfoText->append(QString::number(ui.qvtkWidget->width()) + "," + QString::number(ui.qvtkWidget->height()));
+		ui.visDock->setMinimumSize(1000, 600);
+		// ui.visDock->resize(size - QSize(310, 57));
+	}
+	else {
+		ui.InfoText->append(QString::number(ui.qvtkWidget->width()) + "," + QString::number(ui.qvtkWidget->height()));
+		ui.visDock->resize(size - QSize(310, 57));
+	}
+
+	
+}*/
+
+
 
 //onOpen
 void QT_PCL_Segmentation::onOpen()
@@ -158,7 +175,7 @@ PcPtr WLOP(PcPtr inCloud, int num = 1000) {
 
 // 随机采样函数
 PcPtr randomSampling(PcPtr inCloud, int num=1000) {
-	PcPtr sampleCloud(new Pc);
+	PcPtr sampleCloud(new PointCloud<PointXYZ>);
 	int size = inCloud->points.size();
 	vector<int> nCard(size,0);
 	for (int i = 0; i < size; ++i) {
@@ -172,38 +189,67 @@ PcPtr randomSampling(PcPtr inCloud, int num=1000) {
 }
 
 // 停止判断函数
-bool isAllSamplesIdentified(std::vector<int> kind) {
-	for (int k : kind) {
-		if (k == Candidate || k == Sample) {
+bool isAllSamplesIdentified(std::vector<SamplePoint> info) {
+	for (SamplePoint k : info) {
+		if (k.kind == Candidate || k.kind == Sample) {
 			return false;
 		}
 	}
 	return true;
 }
 
-// 计算所有sample邻居
-void QT_PCL_Segmentation::updateNeighbors() {
-
-}
-
 // 计算所有sample的初始点云Q的邻居
-void QT_PCL_Segmentation::updateOriginalNeighbors() {
-
+vector<SamplePoint> updateOriginalNeighbors(PcPtr qc, PcPtr xc, double radius, vector<SamplePoint> &info) {
+	KdTreeFLANN<PointXYZ> kdtree;
+	kdtree.setInputCloud(qc);
+	int index = 0;
+	for (PointXYZ xpt : xc->points) {
+		vector<int> neighIndex;
+		vector<float> neighDistance;
+		int num = kdtree.radiusSearch(xpt, radius, neighIndex, neighDistance);
+		info[index].setOriginalIndics(neighIndex);
+		info[index].setOriginalDistances(neighDistance);
+		index++;
+	}
+	return info;
 }
 
 // 计算所有sample间的邻居
-void QT_PCL_Segmentation::updateSampleNeighbors() {
+vector<SamplePoint> updateSelfNeighbors(PcPtr xc, double radius, vector<SamplePoint> &info) {
+	KdTreeFLANN<PointXYZ> kdtree;
+	kdtree.setInputCloud(xc);
+	int index = 0;
+	for (PointXYZ xpt : xc->points) {
+		vector<int> neighIndex;
+		vector<float> neighDistance;
+		int num = kdtree.radiusSearch(xpt, radius, neighIndex, neighDistance);
+		info[index].setSelfIndics(neighIndex);
+		info[index].setSelfDistances(neighDistance);
+		index++;
+	}
 
+	return info;
 }
+
+// 计算所有sample邻居
+void QT_PCL_Segmentation::updateALLNeighbors(PcPtr qc, PcPtr xc, double radius, vector<SamplePoint> &info) {
+	updateOriginalNeighbors(qc, xc, radius, info);
+	updateSelfNeighbors(xc, radius, info);
+}
+
 
 
 // 计算所有sample有向度
 void QT_PCL_Segmentation::computeALLDirectionalityDegree() {
-
+	for (SamplePoint sp : this->xInfo) {
+		sp.computeSigma(this->xCloud);
+	}
 }
 
-double QT_PCL_Segmentation::computeDirectionalityDegree(pcl::PointCloud<pcl::PointXYZ>::Ptr xcp, int index) {
-
+double QT_PCL_Segmentation::computeDirectionalityDegree(int index) {
+	double sigma = this->xInfo[index].getSigma();
+	if (sigma != 0) return sigma;
+	return this->xInfo[index].computeSigma(this->xCloud);;
 }
 
 // 根据tracing 筛选branch
@@ -215,47 +261,69 @@ int tracingFromPt(int index, pcl::PointCloud<pcl::PointXYZ>::Ptr) {
 void QT_PCL_Segmentation::l1_median() {
 	// TO-DO：参数获取
 	int sampleNum = 1000;
+	double h_rate = 0.5;
+	double replusion_u = 0.35;
 	// 初始采样
-	if (this->xCloud->points.size() < 0) {
-		this->xCloud = WLOP(this->cloud);
+	if (this->xCloud->points.size() < 1) {
+		this->xCloud = randomSampling(this->cloud, sampleNum);
 	}
 	else {
-		ui.InfoText->append("采样已完成，按现有采样迭代");
+		ui.InfoText->append("sampling finishes.");
 	}
-
-	this->xKind.clear();
-	this->xKind.resize(this->xCloud->size(), 0);
+	
+	if (GlobalFun::synInfoWithCloud(this->xInfo, this->xCloud)) {
+		ui.InfoText->append("\n[syn error between cloud and info!!]\n");
+		return;
+	}
 	// 初始neighborhood size
-	int h0 = 0;
+	pcl::PointXYZ min;//用于存放三个轴的最小值
+	pcl::PointXYZ max;//用于存放三个轴的最大值
+	pcl::getMinMax3D(*cloud, min, max);
+	double dbb2 = (max.x - min.x)*(max.x - min.x)
+		+ (max.y - min.y)*(max.y - min.y)
+		+ (max.z - min.z)*(max.z - min.z);
+	double h0 = sqrt(dbb2) /pow(this->cloud->width, 1.0/3);// h0= dbb/三次根号下点云点的数量
+	double h = h0;
 	// 迭代收缩
-	while (!isAllSamplesIdentified(this->xKind)) {
+	while (!isAllSamplesIdentified(this->xInfo)) {
+		updateALLNeighbors(this->cloud, this->xCloud, h, this->xInfo);
+
+		// TO-DO 根据迭代公式改变X内点位置
+
+		computeALLDirectionalityDegree();
+		int candidateCount = 0;
 		for (size_t i = 0; i < this->xCloud->points.size(); ++i) {
-			double sigma = computeDirectionalityDegree(this->xCloud, i);
-			if (sigma > 0.9) {
-				// 加入candidate points
-				this->xKind[i] = 1;
-			}
+			if (this->xInfo[i].getSigma() > 0.9) {
+				xInfo[i].kind = Candidate;
+				candidateCount++;
+			}	
 		}
+		if (candidateCount < 1) {
+			// 当一次扫描无法产生新的candidate时，扩大h
+			h += h_rate * h0;
+			continue;
+		}
+
 		for (size_t i = 0; i < this->xCloud->points.size(); ++i) {
-			if (this->xKind[i] == Candidate) {
+			if (this->xInfo[i].kind == Candidate) {
 				// 开始tracing,生成骨骼
 				int traceNum = tracingFromPt(i, this->xCloud);
-				if (traceNum>4) {
+				if (traceNum > 4) {
 					// 生成一条骨骼
-				} 
+				}
 				// 移出刚才参与过的点
 				// 设置bridge point
-			} 
-			else if (this->xKind[i] == Bridge) {
+			}
+			else if (this->xInfo[i].kind == Bridge) {
 				// 移出重复的bridge point
 
 
-			} 
-			else if (this->xKind[i] == Branch) {
+			}
+			else if (this->xInfo[i].kind == Branch) {
 				// neighborhood 内有branch pt 则合并
 
 			}
-			else if (this->xKind[i] == Sample) {
+			else if (this->xInfo[i].kind == Sample) {
 				// 离群点判断，清除离群点
 
 			}
@@ -513,7 +581,7 @@ void QT_PCL_Segmentation::kmeans() {
 	int avg_clusterSize = cloud->points.size() / num;
 	int avg_clusterColor = 255 / num;
 	std::vector<pcl::PointXYZ> center;
-	std::vector<pcolor::RGB> clusterColor(num, { 0,0,0 });
+	std::vector<pi::RGB> clusterColor(num, { 0,0,0 });
 	std::vector<int> clusterSize(num, 0);
 	this->tag.clear();
 	this->tag = std::vector<int>(cloud->points.size(), -1);

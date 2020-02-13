@@ -1,11 +1,18 @@
 #pragma once
 
 #include <QtWidgets/QMainWindow>
+#include <QResizeEvent>
 #include "ui_QT_PCL_Segmentation.h"
 
 #include <vector>
 #include <windows.h>
 #include <string>
+#include <fstream>
+#include <algorithm>
+
+#include "GlobalFun.h"
+#include "PointInfo.h"
+#include "SamplePoint.h"
 
 #include <pcl/common/projection_matrix.h>
 #include <pcl/ModelCoefficients.h>
@@ -34,6 +41,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/io/vtk_lib_io.h>//loadPolygonFileOBJ所属头文件；
 
+using namespace pi;
+
 class QT_PCL_Segmentation : public QMainWindow
 {
 	Q_OBJECT
@@ -53,7 +62,7 @@ private:
 	double skelScale;
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr xCloud;
-	std::vector<int> xKind;
+	std::vector<SamplePoint> xInfo;
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloudfiltered;
 	float vertex[10000][3];
@@ -71,6 +80,8 @@ private:
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
 
 	void initialVtkWidget();
+	//QSize viewSize(0,0);
+	//virtual void resizeEvent(QResizeEvent *event);
 	pcl::PointXYZ median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
 	bool BayesTest(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
 	void connectSkel(int i,int j, pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
@@ -83,11 +94,9 @@ private:
 	void offReader(std::string filename);
 	void saveNoff(std::string filename);
 	void l1_median();
-	void updateNeighbors();
-	void updateOriginalNeighbors();
-	void updateSampleNeighbors();
+	void updateALLNeighbors(PcPtr qc, PcPtr xc, double radius, vector<SamplePoint> &info);
 	void computeALLDirectionalityDegree();
-	double computeDirectionalityDegree(pcl::PointCloud<pcl::PointXYZ>::Ptr xcp, int index);
+	double computeDirectionalityDegree(int index);
 
 	void computeNormal();
 	void downSample(std::string path);

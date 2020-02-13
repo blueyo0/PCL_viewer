@@ -115,8 +115,10 @@
     </QtRcc>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GlobalFun.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="QT_PCL_Segmentation.cpp" />
+    <ClCompile Include="SamplePoint.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="QT_PCL_Segmentation.h" />
@@ -126,6 +128,11 @@
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="QT_PCL_Segmentation.qrc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GlobalFun.h" />
+    <ClInclude Include="PointInfo.h" />
+    <ClInclude Include="SamplePoint.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
