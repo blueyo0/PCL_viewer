@@ -16,6 +16,8 @@ VTK_MODULE_INIT(vtkInteractionStyle)
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
 
+#include "MedialThread.h"
+
 
 using namespace std;
 using namespace pcl;
@@ -51,7 +53,7 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	connect(ui.segButton_2, SIGNAL(clicked()), this, SLOT(segmentation()));
 	connect(ui.segButton_3, SIGNAL(clicked()), this, SLOT(onRandomSample()));
 
-	connect(ui.drawButton, SIGNAL(clicked()), this, SLOT(drawSkel()));
+	connect(ui.drawButton, SIGNAL(clicked()), this, SLOT(onL1()));
 	connect(ui.drawButton_6, SIGNAL(clicked()), this, SLOT(BayesSkel()));
 	// connect(ui.drawButton_3, SIGNAL(clicked()), this, SLOT(reDrawSkel()));
 
@@ -62,6 +64,9 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	connect(ui.noiseButton, SIGNAL(clicked()), this, SLOT(noise()));
 	connect(ui.outlierButton, SIGNAL(clicked()), this, SLOT(outlier()));
 	connect(ui.downSampleButton, SIGNAL(clicked()), this, SLOT(onDownSample()));
+
+	connect(this, SIGNAL(updateSignal()), this, SLOT(onUpdate()));
+
 }
 
 void QT_PCL_Segmentation::initialVtkWidget()
@@ -207,6 +212,10 @@ vector<SamplePoint> updateOriginalNeighbors(PcPtr qc, PcPtr xc, double radius, v
 		vector<int> neighIndex;
 		vector<float> neighDistance;
 		int num = kdtree.radiusSearch(xpt, radius, neighIndex, neighDistance);
+		while (neighDistance.size()>0 && neighDistance[0]==0) {
+			neighDistance.erase(neighDistance.begin());
+			neighIndex.erase(neighIndex.begin());
+		}
 		info[index].setOriginalIndics(neighIndex);
 		info[index].setOriginalDistances(neighDistance);
 		index++;
@@ -219,10 +228,14 @@ vector<SamplePoint> updateSelfNeighbors(PcPtr xc, double radius, vector<SamplePo
 	KdTreeFLANN<PointXYZ> kdtree;
 	kdtree.setInputCloud(xc);
 	int index = 0;
-	for (PointXYZ xpt : xc->points) {
+	for (int i = 0; i < xc->points.size(); ++i) {
 		vector<int> neighIndex;
 		vector<float> neighDistance;
-		int num = kdtree.radiusSearch(xpt, radius, neighIndex, neighDistance);
+		int num = kdtree.radiusSearch(i, radius, neighIndex, neighDistance);
+		if (neighIndex.size() > 0) {
+			neighIndex.erase(neighIndex.begin());
+			neighDistance.erase(neighDistance.begin());
+		}
 		info[index].setSelfIndics(neighIndex);
 		info[index].setSelfDistances(neighDistance);
 		index++;
@@ -241,8 +254,8 @@ void QT_PCL_Segmentation::updateALLNeighbors(PcPtr qc, PcPtr xc, double radius, 
 
 // 计算所有sample有向度
 void QT_PCL_Segmentation::computeALLDirectionalityDegree() {
-	for (SamplePoint sp : this->xInfo) {
-		sp.computeSigma(this->xCloud);
+	for (int i = 0; i < this->xInfo.size(); ++i) {
+		this->xInfo[i].computeSigma(this->xCloud);
 	}
 }
 
@@ -252,6 +265,79 @@ double QT_PCL_Segmentation::computeDirectionalityDegree(int index) {
 	return this->xInfo[index].computeSigma(this->xCloud);;
 }
 
+void QT_PCL_Segmentation::updateALLAlphaAndBeta(vector<SamplePoint> &info, double h) {
+	for (int index = 0; index < info.size(); ++index) {
+		// alpha
+		vector<float> o_dist = info[index].getOriginalDistances();
+		info[index].alpha.clear();
+		info[index].alpha.resize(o_dist.size(), 0);
+		double div = 1;
+		for (int i = 0; i < o_dist.size(); ++i) {
+			info[index].alpha[i] = GlobalFun::weight(o_dist[i], h) / o_dist[i];
+			if (i==0) {
+				double temp = info[index].alpha[i];
+				while (temp > 100) {
+					temp /= 10;
+					div *= 10;
+				}
+			}
+			if (div > 1) info[index].alpha[i] /= div;
+		}
+		
+
+		//beta
+		vector<float> s_dist = info[index].getSelfDistances();
+		info[index].beta.clear();
+		info[index].beta.resize(s_dist.size(), 0);
+		div = 1;
+		for (int i = 0; i < s_dist.size(); ++i) {
+			info[index].beta[i] = GlobalFun::weight(s_dist[i], h) / pow(s_dist[i], 3);
+			if (i == 0) {
+				double temp = info[index].beta[i];
+				while (temp > 1000) {
+					temp /= 10;
+					div *= 10;
+				}
+			}
+			if (div > 1) info[index].beta[i] /= div;
+
+		}
+	}
+}
+
+void outputInfo(const vector<SamplePoint> info, QTextEdit* qte) {
+	int num = 0;
+	for (SamplePoint pi : info) {
+		num++;
+		qte->append(
+			"["+QString::number(num)+"]"+
+			"sigma: "+QString::number(pi.getSigma())+
+			"alpha_size: "+ QString::number(pi.alpha.size())+
+			"beta_size: "+ QString::number(pi.beta.size())+
+			"o_neigh_size:"+ QString::number(pi.getOriginalIndics().size())+
+			"s_neigh_size:"+ QString::number(pi.getSelfIndics().size())+"\n"
+		);
+	}
+}
+
+void QT_PCL_Segmentation::updateALLInfo(double h) {
+	updateALLNeighbors(this->cloud, this->xCloud, h, this->xInfo);
+	updateALLAlphaAndBeta(this->xInfo, h);
+	computeALLDirectionalityDegree();
+}
+
+void QT_PCL_Segmentation::updateXPos(double h, double mu) {
+	// TO-DO 根据迭代公式改变X内点位置
+	for (int i = 0; i < this->xCloud->points.size(); ++i) {
+		/*this->xCloud->points[i] = GlobalFun::nextPos(this->xInfo[i],
+										 this->xCloud,
+										 this->cloud, mu);*/
+		
+		this->xCloud->points[i].x += 0.1;
+	}
+	GlobalFun::synInfoWithCloud(this->xInfo, this->xCloud);
+}
+
 // 根据tracing 筛选branch
 int tracingFromPt(int index, pcl::PointCloud<pcl::PointXYZ>::Ptr) {
 	return 6;
@@ -259,6 +345,7 @@ int tracingFromPt(int index, pcl::PointCloud<pcl::PointXYZ>::Ptr) {
 
 // l1中值主函数
 void QT_PCL_Segmentation::l1_median() {
+	ui.InfoText->append("\n!!L1_median start!!\n");
 	// TO-DO：参数获取
 	int sampleNum = 1000;
 	double h_rate = 0.5;
@@ -266,13 +353,14 @@ void QT_PCL_Segmentation::l1_median() {
 	// 初始采样
 	if (this->xCloud->points.size() < 1) {
 		this->xCloud = randomSampling(this->cloud, sampleNum);
+		ui.InfoText->append("--auto sampling--\n");
 	}
 	else {
-		ui.InfoText->append("sampling finishes.");
+		ui.InfoText->append("--already sampled--\n");
 	}
 	
-	if (GlobalFun::synInfoWithCloud(this->xInfo, this->xCloud)) {
-		ui.InfoText->append("\n[syn error between cloud and info!!]\n");
+	if (GlobalFun::synInfoWithCloud(this->xInfo, this->xCloud)!=0) {
+		ui.InfoText->append("\n[!!syn error between cloud and info!!]\n");
 		return;
 	}
 	// 初始neighborhood size
@@ -284,20 +372,27 @@ void QT_PCL_Segmentation::l1_median() {
 		+ (max.z - min.z)*(max.z - min.z);
 	double h0 = sqrt(dbb2) /pow(this->cloud->width, 1.0/3);// h0= dbb/三次根号下点云点的数量
 	double h = h0;
+	ui.InfoText->append("\n【h:"+QString::number(h)+"】\n");
+
+	updateALLInfo(h);
 	// 迭代收缩
-	while (!isAllSamplesIdentified(this->xInfo)) {
-		updateALLNeighbors(this->cloud, this->xCloud, h, this->xInfo);
-
-		// TO-DO 根据迭代公式改变X内点位置
-
-		computeALLDirectionalityDegree();
-		int candidateCount = 0;
+	//while (!isAllSamplesIdentified(this->xInfo)) {
+	int time = 10;
+	while (time>0) {
+		updateXPos(h, replusion_u);
+		updateALLInfo(h);
+		emit updateSignal();
+		//displaySampleCloud(this->xCloud);
+		time--;
+		// TO-DO tracing等内容
+		/*int candidateCount = 0;
 		for (size_t i = 0; i < this->xCloud->points.size(); ++i) {
 			if (this->xInfo[i].getSigma() > 0.9) {
 				xInfo[i].kind = Candidate;
 				candidateCount++;
 			}	
 		}
+		
 		if (candidateCount < 1) {
 			// 当一次扫描无法产生新的candidate时，扩大h
 			h += h_rate * h0;
@@ -327,8 +422,9 @@ void QT_PCL_Segmentation::l1_median() {
 				// 离群点判断，清除离群点
 
 			}
-		}
+		}*/
 	}
+	ui.InfoText->append("\n---!!L1-median finish!!---\n");
 }
 
 
@@ -504,6 +600,13 @@ void QT_PCL_Segmentation::displaySampleCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1,0,0, "sample_cloud");
 	ui.qvtkWidget->update();
 }
+
+void QT_PCL_Segmentation::onL1() {
+	MedialThread *mt = new MedialThread(this);
+	this->moveToThread(mt);
+	mt->start();
+}
+
 
 void QT_PCL_Segmentation::onRandomSample() {
 	ui.InfoText->append("random sampling starts");
@@ -1412,6 +1515,11 @@ void QT_PCL_Segmentation::downSample(std::string path) {
 	writer.write(path.substr(0, path.length() - 4) + "_down.pcd", *cloud_filtered,
 		Eigen::Vector4f::Zero(), Eigen::Quaternionf::Identity(), false);
 }
+
+void QT_PCL_Segmentation::onUpdate() {
+	this->displaySampleCloud(this->xCloud);
+}
+
 
 void QT_PCL_Segmentation::onRandomMissing() {
 	pcl::PointCloud <pcl::PointXYZ>::Ptr missingCloud(new pcl::PointCloud <pcl::PointXYZ>);

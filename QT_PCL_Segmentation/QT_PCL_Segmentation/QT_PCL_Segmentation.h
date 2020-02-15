@@ -47,6 +47,8 @@ class QT_PCL_Segmentation : public QMainWindow
 {
 	Q_OBJECT
 
+signals:
+	void updateSignal();
 public:
 	QT_PCL_Segmentation(QWidget *parent = Q_NULLPTR);
 
@@ -79,6 +81,7 @@ private:
 
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
 
+public:
 	void initialVtkWidget();
 	//QSize viewSize(0,0);
 	//virtual void resizeEvent(QResizeEvent *event);
@@ -93,19 +96,24 @@ private:
 	pcl::PointCloud<pcl::PointXYZ>::Ptr normalize(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, bool divMode = true);//标准化函数
 	void offReader(std::string filename);
 	void saveNoff(std::string filename);
-	void l1_median();
 	void updateALLNeighbors(PcPtr qc, PcPtr xc, double radius, vector<SamplePoint> &info);
+	void updateALLAlphaAndBeta(vector<SamplePoint> &info, double h);
 	void computeALLDirectionalityDegree();
 	double computeDirectionalityDegree(int index);
+	void updateALLInfo(double h);
+	void updateXPos(double h, double mu);
 
 	void computeNormal();
 	void downSample(std::string path);
 	void displaySampleCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr);
+	void l1_median();
 
 
 
 
 private slots:
+	void onUpdate();
+	void onL1();
 	void showDemo(); // 弹出messageBox和InfoText输出,用于测试文本框和软件是否正常运行
 	void showPCL();  // 随机生成点云并显示，用于测试点云显示功能
 	void colorByAxis(); // 按坐标给点云上色，用于测试点云彩色显示功能
