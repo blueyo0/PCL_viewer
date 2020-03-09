@@ -216,8 +216,16 @@ vector<SamplePoint> updateOriginalNeighbors(PcPtr qc, PcPtr xc, double radius, v
 			neighDistance.erase(neighDistance.begin());
 			neighIndex.erase(neighIndex.begin());
 		}
+		for (int i = 0; i < neighDistance.size(); ++i) {
+			if (neighDistance[i]<1e-8 || neighDistance[i]>1e8) {
+				neighIndex.erase(neighIndex.begin() + i);
+				neighDistance.erase(neighDistance.begin() + i);
+				i--;
+			}
+		}
 		info[index].setOriginalIndics(neighIndex);
 		info[index].setOriginalDistances(neighDistance);
+		info[index].o_size = neighDistance.size();
 		index++;
 	}
 	return info;
@@ -232,12 +240,20 @@ vector<SamplePoint> updateSelfNeighbors(PcPtr xc, double radius, vector<SamplePo
 		vector<int> neighIndex;
 		vector<float> neighDistance;
 		int num = kdtree.radiusSearch(i, radius, neighIndex, neighDistance);
-		if (neighIndex.size() > 0) {
+		while (neighDistance.size() > 0 && neighDistance[0] == 0) {
 			neighIndex.erase(neighIndex.begin());
 			neighDistance.erase(neighDistance.begin());
 		}
+		for (int i = 0; i < neighDistance.size(); ++i) {
+			if (neighDistance[i]<1e-8 || neighDistance[i]>1e8) {
+				neighIndex.erase(neighIndex.begin() + i);
+				neighDistance.erase(neighDistance.begin() + i);
+				i--;
+			}
+		}
 		info[index].setSelfIndics(neighIndex);
 		info[index].setSelfDistances(neighDistance);
+		info[index].s_size = neighDistance.size();
 		index++;
 	}
 
@@ -255,14 +271,14 @@ void QT_PCL_Segmentation::updateALLNeighbors(PcPtr qc, PcPtr xc, double radius, 
 // 计算所有sample有向度
 void QT_PCL_Segmentation::computeALLDirectionalityDegree() {
 	for (int i = 0; i < this->xInfo.size(); ++i) {
-		this->xInfo[i].computeSigma(this->xCloud);
+		this->xInfo[i].computeSigma(this->xCloud, this->xInfo);
 	}
 }
 
 double QT_PCL_Segmentation::computeDirectionalityDegree(int index) {
 	double sigma = this->xInfo[index].getSigma();
 	if (sigma != 0) return sigma;
-	return this->xInfo[index].computeSigma(this->xCloud);;
+	return this->xInfo[index].computeSigma(this->xCloud, this->xInfo);;
 }
 
 void QT_PCL_Segmentation::updateALLAlphaAndBeta(vector<SamplePoint> &info, double h) {
@@ -271,35 +287,50 @@ void QT_PCL_Segmentation::updateALLAlphaAndBeta(vector<SamplePoint> &info, doubl
 		vector<float> o_dist = info[index].getOriginalDistances();
 		info[index].alpha.clear();
 		info[index].alpha.resize(o_dist.size(), 0);
-		double div = 1;
+		//double div = 1;
 		for (int i = 0; i < o_dist.size(); ++i) {
 			info[index].alpha[i] = GlobalFun::weight(o_dist[i], h) / o_dist[i];
-			if (i==0) {
-				double temp = info[index].alpha[i];
+			/*if (i==0) {
+				if (isnan(info[index].alpha[i]))
+					info[index].alpha[i] = 0;
+				else if (isinf(info[index].alpha[i]))
+					info[index].alpha[i] = 10000;
+				/*double temp = info[index].alpha[i];
 				while (temp > 100) {
 					temp /= 10;
 					div *= 10;
 				}
-			}
-			if (div > 1) info[index].alpha[i] /= div;
+			}*/
+			//if (div > 1) info[index].alpha[i] /= div;
 		}
 		
 
 		//beta
 		vector<float> s_dist = info[index].getSelfDistances();
+		vector<int> s_indics = this->xInfo[index].getSelfIndics();
 		info[index].beta.clear();
 		info[index].beta.resize(s_dist.size(), 0);
-		div = 1;
+		//div = 1;
 		for (int i = 0; i < s_dist.size(); ++i) {
-			info[index].beta[i] = GlobalFun::weight(s_dist[i], h) / pow(s_dist[i], 3);
-			if (i == 0) {
-				double temp = info[index].beta[i];
+			if (this->xInfo[s_indics[i]].kind != Sample) {
+				info[index].beta[i] = 0;
+				continue;
+			}
+			//double lnBeta = log(GlobalFun::weight(s_dist[i], h)) - log(s_dist[i])*3;
+			//info[index].beta[i] = exp(lnBeta);
+			info[index].beta[i] = GlobalFun::weight(s_dist[i], h) / s_dist[i];
+			/*if (i == 0) {
+				if (isnan(info[index].beta[i]))
+					info[index].beta[i] = 0;
+				else if (isinf(info[index].beta[i]))
+					info[index].beta[i] = 100000;
+				/*double temp = info[index].beta[i];
 				while (temp > 1000) {
 					temp /= 10;
 					div *= 10;
 				}
-			}
-			if (div > 1) info[index].beta[i] /= div;
+			}*/
+			//if (div > 1) info[index].beta[i] /= div;
 
 		}
 	}
@@ -322,19 +353,48 @@ void outputInfo(const vector<SamplePoint> info, QTextEdit* qte) {
 
 void QT_PCL_Segmentation::updateALLInfo(double h) {
 	updateALLNeighbors(this->cloud, this->xCloud, h, this->xInfo);
+	for (int i = 0; i < this->xCloud->points.size(); ++i) {
+		if (this->xInfo[i].o_size < 1 ||
+			this->xInfo[i].s_size < 1 ) {
+			this->xInfo[i].kind = Removed;
+		}
+	}
 	updateALLAlphaAndBeta(this->xInfo, h);
 	computeALLDirectionalityDegree();
 }
 
+void QT_PCL_Segmentation::updateDensity(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, double radius) {
+	this->density.clear();
+	int size = this->cloud->points.size();
+	this->density.resize(size, 1);
+	KdTreeFLANN<PointXYZ> kdtree;
+	kdtree.setInputCloud(cloud);
+	for (int i = 0; i < size; ++i) {
+		vector<int> neighIndex;
+		vector<float> neighDistance;
+		int num = kdtree.radiusSearch(i, radius, neighIndex, neighDistance);
+		while (neighDistance.size() > 0 && neighDistance[0] == 0) {
+			neighDistance.erase(neighDistance.begin());
+			neighIndex.erase(neighIndex.begin());
+		}
+		for (float dist : neighDistance) {
+			this->density[i] += GlobalFun::weight(dist, radius);
+		}
+		this->density[i] = 1 / this->density[i];
+	}
+}
+
 void QT_PCL_Segmentation::updateXPos(double h, double mu) {
 	// TO-DO 根据迭代公式改变X内点位置
+	vector<PointXYZ> temp(this->xCloud->points.size());
 	for (int i = 0; i < this->xCloud->points.size(); ++i) {
-		/*this->xCloud->points[i] = GlobalFun::nextPos(this->xInfo[i],
-										 this->xCloud,
-										 this->cloud, mu);*/
-		
-		this->xCloud->points[i].x += 0.1;
+		temp[i] = GlobalFun::nextPos(this->xInfo[i],
+									 this->xCloud,
+									 this->cloud,
+									 this->density, mu, true);		
+		//this->xCloud->points[i].x += 0.1;
 	}
+	this->xCloud->points.assign(temp.begin(), temp.end());
 	GlobalFun::synInfoWithCloud(this->xInfo, this->xCloud);
 }
 
@@ -370,11 +430,12 @@ void QT_PCL_Segmentation::l1_median() {
 	double dbb2 = (max.x - min.x)*(max.x - min.x)
 		+ (max.y - min.y)*(max.y - min.y)
 		+ (max.z - min.z)*(max.z - min.z);
-	double h0 = sqrt(dbb2) /pow(this->cloud->width, 1.0/3);// h0= dbb/三次根号下点云点的数量
-	double h = h0;
+	double h0 = sqrt(dbb2) /pow(this->cloud->points.size(), 1.0/3);// h0= dbb/三次根号下点云点的数量
+	double h = 0.1;
 	ui.InfoText->append("\n【h:"+QString::number(h)+"】\n");
 
 	updateALLInfo(h);
+	updateDensity(this->cloud, h);
 	// 迭代收缩
 	//while (!isAllSamplesIdentified(this->xInfo)) {
 	int time = 10;
@@ -423,6 +484,7 @@ void QT_PCL_Segmentation::l1_median() {
 
 			}
 		}*/
+		// TO-DO: radius更新
 	}
 	ui.InfoText->append("\n---!!L1-median finish!!---\n");
 }
@@ -598,6 +660,9 @@ void QT_PCL_Segmentation::displaySampleCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr
 	viewer->addPointCloud(inCloud, "sample_cloud");
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 8, "sample_cloud");
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1,0,0, "sample_cloud");
+	viewer->removeShape("sp0");
+	viewer->addSphere(inCloud->points[0], 0.0000006*cloud->width, 0, 135, 0, "sp0");
+
 	ui.qvtkWidget->update();
 }
 
@@ -1518,6 +1583,14 @@ void QT_PCL_Segmentation::downSample(std::string path) {
 
 void QT_PCL_Segmentation::onUpdate() {
 	this->displaySampleCloud(this->xCloud);
+	ui.InfoText->append(
+		"坐标: (" + 
+		QString::number(this->xCloud->points[0].x) + ", " + 
+		QString::number(this->xCloud->points[0].y) + ", " + 
+		QString::number(this->xCloud->points[0].z) + ")\n"+
+		"alhpa size:" + QString::number(this->xInfo[0].alpha.size()) +
+		"beta size:" + QString::number(this->xInfo[0].beta.size())
+	);
 }
 
 

@@ -29,11 +29,16 @@ double GlobalFun::weight(float r, double h) {
 }
 
 
-PointXYZ GlobalFun::nextPos(SamplePoint xi, pi::PcPtr xc, pi::PcPtr qc, double mu) {
+PointXYZ GlobalFun::nextPos(SamplePoint xi, pi::PcPtr xc, pi::PcPtr qc, 
+							vector<double> density, double mu, bool need_density) {
 	Vector3d up1(0,0,0);
 	double down1 = 0.0;
 	int i = 0;
+	vector<int> o_indics = xi.getOriginalIndics();
 	for (double a : xi.alpha) {
+		if (need_density) {
+			a *= density[o_indics[i]];
+		}
 		Vector3d q(qc->points[i].x, qc->points[i].y, qc->points[i].z);
 		up1 += a * q;
 		down1 += a;
@@ -53,11 +58,21 @@ PointXYZ GlobalFun::nextPos(SamplePoint xi, pi::PcPtr xc, pi::PcPtr qc, double m
 		down2 += b;
 		j++;
 	}
-	Vector3d res = up1 / down1 + mu * xi.getSigma()*up2 / down2;
+	Vector3d res(0, 0, 0);
+	if (down1 != 0) {
+		res += up1 / down1;
+	}
+	if (down2 != 0) {
+		res += mu * up2 / down2;
+		// res += mu * xi.getSigma()*up2 / down2;
+	}
 	for (int i = 0; i < 3; ++i) {
-		if (!isfinite(res(i))) res(i) = 1.2;
-		else if (res(i) > 1.2) res(i) = 1.2;
-		else if (res(i) < -1.2) res(i) = -1.2;
+		if (!isfinite(res(i))) 
+			res(i) = 1.2;
+		else if (res(i) > 1.2) 
+			res(i) = 1.2;
+		else if (res(i) < -1.2) 
+			res(i) = -1.2;
 	}
 	return PointXYZ(res(0), res(1), res(2));
 }

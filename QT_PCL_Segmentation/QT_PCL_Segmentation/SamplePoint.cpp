@@ -10,10 +10,13 @@ SamplePoint::~SamplePoint() {
 }
 
 
-double SamplePoint::computeSigma(pi::PcPtr cloud) {
+double SamplePoint::computeSigma(pi::PcPtr cloud, vector<SamplePoint> info) {
 	// ¸ù¾Ýs_indic¼ÆËã
 	vector<PointXYZ> delta;
 	for (int i : this->s_indics) {
+		if (info[i].kind != pi::Sample) {
+			continue;
+		}
 		delta.push_back(PointXYZ(
 			this->pos.x - cloud->points[i].x,
 			this->pos.y - cloud->points[i].y,

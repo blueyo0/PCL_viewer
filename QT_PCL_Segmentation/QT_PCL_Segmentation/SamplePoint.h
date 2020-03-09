@@ -17,6 +17,8 @@ protected:
 	double sigma; // 有向度
 public:
 	PointXYZ pos;
+	int o_size;
+	int s_size;
 	pi::PtKind kind;
 	vector<double> alpha; // original neighbor 对应的alpha值
 	vector<double> beta; // self neighbor 对应的beta值
@@ -24,7 +26,7 @@ public:
 	SamplePoint();
 	~SamplePoint();
 
-	double computeSigma(pi::PcPtr cloud);
+	double computeSigma(pi::PcPtr cloud, vector<SamplePoint> info);
 
 	void setSigma(double);
 	void setPos(PointXYZ);

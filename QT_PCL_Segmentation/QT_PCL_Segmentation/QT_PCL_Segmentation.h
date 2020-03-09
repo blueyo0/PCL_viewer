@@ -59,6 +59,7 @@ private:
 
 	std::string cloudPath;
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
+	std::vector<double> density;
 	std::vector<int> tag;
 	pcl::PointXYZ midPoint;
 	double skelScale;
@@ -96,6 +97,7 @@ public:
 	pcl::PointCloud<pcl::PointXYZ>::Ptr normalize(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, bool divMode = true);//标准化函数
 	void offReader(std::string filename);
 	void saveNoff(std::string filename);
+	void updateDensity(pcl::PointCloud<pcl::PointXYZ>::Ptr, double);
 	void updateALLNeighbors(PcPtr qc, PcPtr xc, double radius, vector<SamplePoint> &info);
 	void updateALLAlphaAndBeta(vector<SamplePoint> &info, double h);
 	void computeALLDirectionalityDegree();
