@@ -118,6 +118,7 @@
     <ClCompile Include="GlobalFun.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MedialThread.cpp" />
+    <ClCompile Include="PointCloudAlgorithm.cpp" />
     <ClCompile Include="QT_PCL_Segmentation.cpp" />
     <ClCompile Include="SamplePoint.cpp" />
   </ItemGroup>
@@ -136,8 +137,10 @@
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\Qt3DCore;$(QTDIR)\include\Qt3DAnimation;$(QTDIR)\include\Qt3DExtras;$(QTDIR)\include\Qt3DInput;$(QTDIR)\include\Qt3DLogic;$(QTDIR)\include\Qt3DRender;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtOpenGL;$(QTDIR)\include\QtOpenGLExtensions;$(QTDIR)\include\QtSvg;$(QTDIR)\include\QtWidgets;D:\eigen-3.3.7</IncludePath>
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\Qt3DCore;$(QTDIR)\include\Qt3DAnimation;$(QTDIR)\include\Qt3DExtras;$(QTDIR)\include\Qt3DInput;$(QTDIR)\include\Qt3DLogic;$(QTDIR)\include\Qt3DRender;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtOpenGL;$(QTDIR)\include\QtOpenGLExtensions;$(QTDIR)\include\QtSvg;$(QTDIR)\include\QtWidgets</IncludePath>
     </ClInclude>
+    <ClInclude Include="PointCloudAlgorithm.h" />
     <ClInclude Include="PointInfo.h" />
     <ClInclude Include="SamplePoint.h" />
+    <ClInclude Include="ParameterMgr.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

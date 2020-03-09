@@ -28,6 +28,9 @@
       <Extensions>moc;h;cpp</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
+    <Filter Include="Header Files\Algorithm">
+      <UniqueIdentifier>{ae03d220-0eed-452b-bbc0-e6323f4e30e8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -43,6 +46,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MedialThread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PointCloudAlgorithm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -72,6 +78,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MedialThread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PointCloudAlgorithm.h">
+      <Filter>Header Files\Algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="ParameterMgr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

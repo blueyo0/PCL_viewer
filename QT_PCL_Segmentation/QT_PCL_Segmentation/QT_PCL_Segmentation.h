@@ -13,6 +13,7 @@
 #include "GlobalFun.h"
 #include "PointInfo.h"
 #include "SamplePoint.h"
+#include "ParameterMgr.h"
 
 #include <pcl/common/projection_matrix.h>
 #include <pcl/ModelCoefficients.h>
@@ -42,6 +43,8 @@
 #include <pcl/io/vtk_lib_io.h>//loadPolygonFileOBJ所属头文件；
 
 using namespace pi;
+using namespace std;
+using namespace pcl;
 
 class QT_PCL_Segmentation : public QMainWindow
 {
@@ -49,28 +52,34 @@ class QT_PCL_Segmentation : public QMainWindow
 
 signals:
 	void updateSignal();
+
 public:
 	QT_PCL_Segmentation(QWidget *parent = Q_NULLPTR);
 
 private:
 	Ui::QT_PCL_SegmentationClass ui;
+	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
+	ParameterMgr *paraMgr;
 
-	pcl::PointCloud<pcl::Normal>::Ptr normalCloud;
+private:
+	PointCloud<PointXYZ>::Ptr originCloud;
+	PointCloud<PointXYZ>::Ptr sampleCloud;
+	PointCloud<PointXYZ>::Ptr cloudfiltered; 
+	PointCloud<Normal>::Ptr normalCloud;
 
-	std::string cloudPath;
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
-	std::vector<double> density;
-	std::vector<int> tag;
-	pcl::PointXYZ midPoint;
+	string cloudPath;
 	double skelScale;
-
-	pcl::PointCloud<pcl::PointXYZ>::Ptr xCloud;
-	std::vector<SamplePoint> xInfo;
-
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloudfiltered;
+	pcl::PointXYZ midPoint;
+	int colorCloudIndex;
 	float vertex[10000][3];
 	int surface[10000][3];
-	void off_obj(std::string input);
+
+
+	/*
+	std::vector<double> density;
+	std::vector<int> tag;
+
+	std::vector<SamplePoint> xInfo;
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr skelCloud;
 	int skelFlag;
@@ -78,44 +87,43 @@ private:
 	double skelSize;
 	int branchNum;
 	std::vector<int> branchLen;
-	std::string modelSkelName;
-
-	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
+	std::string modelSkelName;*/
 
 public:
-	void initialVtkWidget();
 	//QSize viewSize(0,0);
 	//virtual void resizeEvent(QResizeEvent *event);
-	pcl::PointXYZ median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
-	bool BayesTest(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
-	void connectSkel(int i,int j, pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
-	bool colorFlag;
-	double kmeansRadius,c;//distance衰减函数的参数
-	int colorCloudIndex;
-	void correctCenter(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
-	double distance(pcl::PointXYZ a, pcl::PointXYZ b, int model = 1);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr normalize(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, bool divMode = true);//标准化函数
-	void offReader(std::string filename);
-	void saveNoff(std::string filename);
-	void updateDensity(pcl::PointCloud<pcl::PointXYZ>::Ptr, double);
+	//bool BayesTest(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
+	//void connectSkel(int i,int j, pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
+	//bool colorFlag;
+	//double kmeansRadius,c;//distance衰减函数的参数
+	//void correctCenter(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
+	//double distance(pcl::PointXYZ a, pcl::PointXYZ b, int model = 1);
+
+	void initialVtkWidget();
+	//pcl::PointXYZ median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
+	PointCloud<PointXYZ>::Ptr normalize(PointCloud<PointXYZ>::Ptr inCloud, bool divMode = true);
+	void offReader(string filename);
+	void computeNormal();
+	void saveNoff(string filename);
+	void off_obj(string input);
+	void downSample(string path);
+	void displaySampleCloud(PointCloud<PointXYZ>::Ptr);
+
+	/*void updateDensity(pcl::PointCloud<pcl::PointXYZ>::Ptr, double);
 	void updateALLNeighbors(PcPtr qc, PcPtr xc, double radius, vector<SamplePoint> &info);
 	void updateALLAlphaAndBeta(vector<SamplePoint> &info, double h);
 	void computeALLDirectionalityDegree();
 	double computeDirectionalityDegree(int index);
 	void updateALLInfo(double h);
-	void updateXPos(double h, double mu);
+	void updateXPos(double h, double mu);*/
 
-	void computeNormal();
-	void downSample(std::string path);
-	void displaySampleCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr);
-	void l1_median();
+	//void l1_median();
 
 
 
 
 private slots:
 	void onUpdate();
-	void onL1();
 	void showDemo(); // 弹出messageBox和InfoText输出,用于测试文本框和软件是否正常运行
 	void showPCL();  // 随机生成点云并显示，用于测试点云显示功能
 	void colorByAxis(); // 按坐标给点云上色，用于测试点云彩色显示功能
@@ -124,31 +132,33 @@ private slots:
 	void onOpen();   // 打开文件函数，支持pcd，ply
 	void onOpenTxt();// 打开txt文件
 	void onOpenOff(); // 打开off文件
-	// TO-DO： 将TXT集成到onOpen里
 
 	void off_ply();  // off文件转ply，支持off，noff
-	void segmentation(); // pcl库的min-cut 
 	void color(pcl::PointCloud<pcl::PointXYZ>::Ptr,int,int,int); // 点云上色函数
 
-	//void clustering(int num);
-	void kmeans();
+	//void segmentation(); // pcl库的min-cut 
+	//void kmeans();
+	//void onL1();
+
 	void noise();
 	void outlier();
-	void normalizeOfSkel();
-
-
-	bool skelParam(std::string params, int mode=1);
-	void drawSkel();
-	void reDrawSkel();
-	void BayesSkel();
-
-	void onRandomSample();
 
 	void clearPointCloud();
 	void resetPointCloud();
-	void KNNsmooth();
-	void onSaveNoff();
+
+	void onRandomSample();
 	void onDownSample();
 	void onRandomMissing();
+
+	void onSaveNoff();
 	void onSavePLY();
+
+
+	//void clustering(int num);
+	//void normalizeOfSkel();
+	//bool skelParam(std::string params, int mode=1);
+	//void drawSkel();
+	//void reDrawSkel();
+	//void BayesSkel();
+	//void KNNsmooth();
 };

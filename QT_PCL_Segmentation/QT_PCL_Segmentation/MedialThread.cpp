@@ -14,5 +14,5 @@ MedialThread::~MedialThread()
 
 
 void MedialThread::run() {
-	this->window->l1_median();
+	//this->window->l1_median();
 }

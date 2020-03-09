@@ -30,18 +30,19 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 {
 	ui.setupUi(this);
 	//初始化
+	paraMgr = new ParameterMgr;
 	initialVtkWidget();
 	viewer->setBackgroundColor(255, 255, 255);
-	this->colorFlag = false;
+	//this->colorFlag = false;
 	this->colorCloudIndex = 0;
-	this->skelIndex = -1;
-	this->skelSize = 0.01;
+	//this->skelIndex = -1;
+	//this->skelSize = 0.01;
 	bool ok = true;
-	this->kmeansRadius = ui.Radius_2->toPlainText().toDouble(&ok);
-	this->c = -1 * ui.cValue->toPlainText().toDouble(&ok);
+	//this->kmeansRadius = ui.Radius_2->toPlainText().toDouble(&ok);
+	//this->c = -1 * ui.cValue->toPlainText().toDouble(&ok);
 	//连接按钮	
 	connect(ui.actionopen, SIGNAL(triggered()), this, SLOT(onOpen()));
-	connect(ui.actionnormalize, SIGNAL(triggered()), this, SLOT(normalizeOfSkel()));
+	//connect(ui.actionnormalize, SIGNAL(triggered()), this, SLOT(normalizeOfSkel()));
 	connect(ui.actionoff_ply, SIGNAL(triggered()), this, SLOT(onOpenOff()));
 	connect(ui.actionsave_NOFF, SIGNAL(triggered()), this, SLOT(onSaveNoff()));
 	connect(ui.actiondown_sample, SIGNAL(triggered()), this, SLOT(onDownSample()));
@@ -49,12 +50,12 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	connect(ui.actionopen_txt, SIGNAL(triggered()), this, SLOT(onOpenTxt()));
 
 
-	connect(ui.segButton, SIGNAL(clicked()), this, SLOT(kmeans()));
-	connect(ui.segButton_2, SIGNAL(clicked()), this, SLOT(segmentation()));
+	//connect(ui.segButton, SIGNAL(clicked()), this, SLOT(kmeans()));
+	//connect(ui.segButton_2, SIGNAL(clicked()), this, SLOT(segmentation()));
 	connect(ui.segButton_3, SIGNAL(clicked()), this, SLOT(onRandomSample()));
 
-	connect(ui.drawButton, SIGNAL(clicked()), this, SLOT(onL1()));
-	connect(ui.drawButton_6, SIGNAL(clicked()), this, SLOT(BayesSkel()));
+	//connect(ui.drawButton, SIGNAL(clicked()), this, SLOT(onL1()));
+	//connect(ui.drawButton_6, SIGNAL(clicked()), this, SLOT(BayesSkel()));
 	// connect(ui.drawButton_3, SIGNAL(clicked()), this, SLOT(reDrawSkel()));
 
 	connect(ui.clearButton, SIGNAL(clicked()), this, SLOT(clearPointCloud()));
@@ -71,10 +72,12 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 
 void QT_PCL_Segmentation::initialVtkWidget()
 {
-	cloud.reset(new PointCloud<PointXYZ>);
-	skelCloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
-	cloudfiltered.reset(new pcl::PointCloud<pcl::PointXYZ>);
-	normalCloud.reset(new pcl::PointCloud<pcl::Normal>);
+	originCloud.reset(new PointCloud<PointXYZ>);
+	sampleCloud.reset(new PointCloud<PointXYZ>);
+
+	//skelCloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
+	//cloudfiltered.reset(new pcl::PointCloud<pcl::PointXYZ>);
+	//normalCloud.reset(new pcl::PointCloud<pcl::Normal>);
 	viewer.reset(new pcl::visualization::PCLVisualizer("viewer", false));
 	//viewer->addPointCloud(cloud, "cloud");
 
@@ -92,30 +95,6 @@ void QT_PCL_Segmentation::initialVtkWidget()
 	this->tabifyDockWidget(ui.skelDock, ui.skelDock2);
 }
 
-/*
-void QT_PCL_Segmentation::resizeEvent(QResizeEvent *event)
-{
-	QSize size = event->size();
-	QSize old_size = event->oldSize();
-	int delta = size.width() - old_size.width();
-	if ( delta<10 && delta>0) {
-		return;
-	}
-	else if (delta < 0) {
-		ui.InfoText->append(QString::number(ui.qvtkWidget->width()) + "," + QString::number(ui.qvtkWidget->height()));
-		ui.visDock->setMinimumSize(1000, 600);
-		// ui.visDock->resize(size - QSize(310, 57));
-	}
-	else {
-		ui.InfoText->append(QString::number(ui.qvtkWidget->width()) + "," + QString::number(ui.qvtkWidget->height()));
-		ui.visDock->resize(size - QSize(310, 57));
-	}
-
-	
-}*/
-
-
-
 //onOpen
 void QT_PCL_Segmentation::onOpen()
 {
@@ -124,7 +103,7 @@ void QT_PCL_Segmentation::onOpen()
 		tr("Open PCD files(*.pcd *.ply)"));
 	std::string file_name = fileName.toStdString();
 	this->cloudPath = file_name;
-	this->modelSkelName = file_name.substr(0, file_name.length() - 4);
+	//this->modelSkelName = file_name.substr(0, file_name.length() - 4);
 	//this->modelSkelName += ".txt";
 
 	if (!fileName.isEmpty())
@@ -133,39 +112,39 @@ void QT_PCL_Segmentation::onOpen()
 		{
 			pcl::PCLPointCloud2 cloud2;
 			//pcl::PointCloud<Eigen::MatrixXf> cloud2;
-			Eigen::Vector4f origin;
+			Eigen::Vector4f ori;
 			Eigen::Quaternionf orientation;
 			int pcd_version;
 			int data_type;
 			unsigned int data_idx;
 			int offset = 0;
 			pcl::PCDReader rd;
-			rd.readHeader(file_name, cloud2, origin, orientation, pcd_version, data_type, data_idx);
+			rd.readHeader(file_name, cloud2, ori, orientation, pcd_version, data_type, data_idx);
 
 			if (data_type == 0)
 			{
-				pcl::io::loadPCDFile(file_name, *cloud);
+				pcl::io::loadPCDFile(file_name, *originCloud);
 			}
 			else if (data_type == 2)
 			{
 				pcl::PCDReader reader;
-				reader.read<pcl::PointXYZ>(file_name, *cloud);
+				reader.read<pcl::PointXYZ>(file_name, *originCloud);
 			}
-			pcl::io::savePLYFileASCII(file_name.substr(0, file_name.length() - 4) + ".ply", *cloud);
+			pcl::io::savePLYFileASCII(file_name.substr(0, file_name.length() - 4) + ".ply", *originCloud);
 		}
 		else//PLY read 
 		{
 			pcl::PLYReader yrd;
-			yrd.read<pcl::PointXYZ>(file_name, *cloud);
+			yrd.read<pcl::PointXYZ>(file_name, *originCloud);
 		}
 		//correctCenter(cloud);
 		//pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> single_color(cloud, 0, 255, 0);		
 
 		viewer->removePointCloud("cloud");
-		viewer->updatePointCloud(cloud, "cloud");
-		viewer->addPointCloud(cloud, "cloud");
+		viewer->updatePointCloud(originCloud, "cloud");
+		viewer->addPointCloud(originCloud, "cloud");
 		viewer->resetCamera();
-		this->color(cloud, 250, 140, 20);
+		this->color(originCloud, 250, 140, 20);
 		//ui.qvtkWidget->update();
 
 
@@ -173,168 +152,6 @@ void QT_PCL_Segmentation::onOpen()
 	}
 }
 
-// WLOP 采样函数
-PcPtr WLOP(PcPtr inCloud, int num = 1000) {
-	return inCloud;
-}
-
-// 随机采样函数
-PcPtr randomSampling(PcPtr inCloud, int num=1000) {
-	PcPtr sampleCloud(new PointCloud<PointXYZ>);
-	int size = inCloud->points.size();
-	vector<int> nCard(size,0);
-	for (int i = 0; i < size; ++i) {
-		nCard[i] = i;
-	}
-	random_shuffle(nCard.begin(), nCard.begin()+size);
-	for (int i = 0; i < num; ++i) {
-		sampleCloud->points.push_back(inCloud->points[nCard[i]]);
-	}
-	return sampleCloud;
-}
-
-// 停止判断函数
-bool isAllSamplesIdentified(std::vector<SamplePoint> info) {
-	for (SamplePoint k : info) {
-		if (k.kind == Candidate || k.kind == Sample) {
-			return false;
-		}
-	}
-	return true;
-}
-
-// 计算所有sample的初始点云Q的邻居
-vector<SamplePoint> updateOriginalNeighbors(PcPtr qc, PcPtr xc, double radius, vector<SamplePoint> &info) {
-	KdTreeFLANN<PointXYZ> kdtree;
-	kdtree.setInputCloud(qc);
-	int index = 0;
-	for (PointXYZ xpt : xc->points) {
-		vector<int> neighIndex;
-		vector<float> neighDistance;
-		int num = kdtree.radiusSearch(xpt, radius, neighIndex, neighDistance);
-		while (neighDistance.size()>0 && neighDistance[0]==0) {
-			neighDistance.erase(neighDistance.begin());
-			neighIndex.erase(neighIndex.begin());
-		}
-		for (int i = 0; i < neighDistance.size(); ++i) {
-			if (neighDistance[i]<1e-8 || neighDistance[i]>1e8) {
-				neighIndex.erase(neighIndex.begin() + i);
-				neighDistance.erase(neighDistance.begin() + i);
-				i--;
-			}
-		}
-		info[index].setOriginalIndics(neighIndex);
-		info[index].setOriginalDistances(neighDistance);
-		info[index].o_size = neighDistance.size();
-		index++;
-	}
-	return info;
-}
-
-// 计算所有sample间的邻居
-vector<SamplePoint> updateSelfNeighbors(PcPtr xc, double radius, vector<SamplePoint> &info) {
-	KdTreeFLANN<PointXYZ> kdtree;
-	kdtree.setInputCloud(xc);
-	int index = 0;
-	for (int i = 0; i < xc->points.size(); ++i) {
-		vector<int> neighIndex;
-		vector<float> neighDistance;
-		int num = kdtree.radiusSearch(i, radius, neighIndex, neighDistance);
-		while (neighDistance.size() > 0 && neighDistance[0] == 0) {
-			neighIndex.erase(neighIndex.begin());
-			neighDistance.erase(neighDistance.begin());
-		}
-		for (int i = 0; i < neighDistance.size(); ++i) {
-			if (neighDistance[i]<1e-8 || neighDistance[i]>1e8) {
-				neighIndex.erase(neighIndex.begin() + i);
-				neighDistance.erase(neighDistance.begin() + i);
-				i--;
-			}
-		}
-		info[index].setSelfIndics(neighIndex);
-		info[index].setSelfDistances(neighDistance);
-		info[index].s_size = neighDistance.size();
-		index++;
-	}
-
-	return info;
-}
-
-// 计算所有sample邻居
-void QT_PCL_Segmentation::updateALLNeighbors(PcPtr qc, PcPtr xc, double radius, vector<SamplePoint> &info) {
-	updateOriginalNeighbors(qc, xc, radius, info);
-	updateSelfNeighbors(xc, radius, info);
-}
-
-
-
-// 计算所有sample有向度
-void QT_PCL_Segmentation::computeALLDirectionalityDegree() {
-	for (int i = 0; i < this->xInfo.size(); ++i) {
-		this->xInfo[i].computeSigma(this->xCloud, this->xInfo);
-	}
-}
-
-double QT_PCL_Segmentation::computeDirectionalityDegree(int index) {
-	double sigma = this->xInfo[index].getSigma();
-	if (sigma != 0) return sigma;
-	return this->xInfo[index].computeSigma(this->xCloud, this->xInfo);;
-}
-
-void QT_PCL_Segmentation::updateALLAlphaAndBeta(vector<SamplePoint> &info, double h) {
-	for (int index = 0; index < info.size(); ++index) {
-		// alpha
-		vector<float> o_dist = info[index].getOriginalDistances();
-		info[index].alpha.clear();
-		info[index].alpha.resize(o_dist.size(), 0);
-		//double div = 1;
-		for (int i = 0; i < o_dist.size(); ++i) {
-			info[index].alpha[i] = GlobalFun::weight(o_dist[i], h) / o_dist[i];
-			/*if (i==0) {
-				if (isnan(info[index].alpha[i]))
-					info[index].alpha[i] = 0;
-				else if (isinf(info[index].alpha[i]))
-					info[index].alpha[i] = 10000;
-				/*double temp = info[index].alpha[i];
-				while (temp > 100) {
-					temp /= 10;
-					div *= 10;
-				}
-			}*/
-			//if (div > 1) info[index].alpha[i] /= div;
-		}
-		
-
-		//beta
-		vector<float> s_dist = info[index].getSelfDistances();
-		vector<int> s_indics = this->xInfo[index].getSelfIndics();
-		info[index].beta.clear();
-		info[index].beta.resize(s_dist.size(), 0);
-		//div = 1;
-		for (int i = 0; i < s_dist.size(); ++i) {
-			if (this->xInfo[s_indics[i]].kind != Sample) {
-				info[index].beta[i] = 0;
-				continue;
-			}
-			//double lnBeta = log(GlobalFun::weight(s_dist[i], h)) - log(s_dist[i])*3;
-			//info[index].beta[i] = exp(lnBeta);
-			info[index].beta[i] = GlobalFun::weight(s_dist[i], h) / s_dist[i];
-			/*if (i == 0) {
-				if (isnan(info[index].beta[i]))
-					info[index].beta[i] = 0;
-				else if (isinf(info[index].beta[i]))
-					info[index].beta[i] = 100000;
-				/*double temp = info[index].beta[i];
-				while (temp > 1000) {
-					temp /= 10;
-					div *= 10;
-				}
-			}*/
-			//if (div > 1) info[index].beta[i] /= div;
-
-		}
-	}
-}
 
 void outputInfo(const vector<SamplePoint> info, QTextEdit* qte) {
 	int num = 0;
@@ -350,145 +167,6 @@ void outputInfo(const vector<SamplePoint> info, QTextEdit* qte) {
 		);
 	}
 }
-
-void QT_PCL_Segmentation::updateALLInfo(double h) {
-	updateALLNeighbors(this->cloud, this->xCloud, h, this->xInfo);
-	for (int i = 0; i < this->xCloud->points.size(); ++i) {
-		if (this->xInfo[i].o_size < 1 ||
-			this->xInfo[i].s_size < 1 ) {
-			this->xInfo[i].kind = Removed;
-		}
-	}
-	updateALLAlphaAndBeta(this->xInfo, h);
-	computeALLDirectionalityDegree();
-}
-
-void QT_PCL_Segmentation::updateDensity(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, double radius) {
-	this->density.clear();
-	int size = this->cloud->points.size();
-	this->density.resize(size, 1);
-	KdTreeFLANN<PointXYZ> kdtree;
-	kdtree.setInputCloud(cloud);
-	for (int i = 0; i < size; ++i) {
-		vector<int> neighIndex;
-		vector<float> neighDistance;
-		int num = kdtree.radiusSearch(i, radius, neighIndex, neighDistance);
-		while (neighDistance.size() > 0 && neighDistance[0] == 0) {
-			neighDistance.erase(neighDistance.begin());
-			neighIndex.erase(neighIndex.begin());
-		}
-		for (float dist : neighDistance) {
-			this->density[i] += GlobalFun::weight(dist, radius);
-		}
-		this->density[i] = 1 / this->density[i];
-	}
-}
-
-void QT_PCL_Segmentation::updateXPos(double h, double mu) {
-	// TO-DO 根据迭代公式改变X内点位置
-	vector<PointXYZ> temp(this->xCloud->points.size());
-	for (int i = 0; i < this->xCloud->points.size(); ++i) {
-		temp[i] = GlobalFun::nextPos(this->xInfo[i],
-									 this->xCloud,
-									 this->cloud,
-									 this->density, mu, true);		
-		//this->xCloud->points[i].x += 0.1;
-	}
-	this->xCloud->points.assign(temp.begin(), temp.end());
-	GlobalFun::synInfoWithCloud(this->xInfo, this->xCloud);
-}
-
-// 根据tracing 筛选branch
-int tracingFromPt(int index, pcl::PointCloud<pcl::PointXYZ>::Ptr) {
-	return 6;
-}
-
-// l1中值主函数
-void QT_PCL_Segmentation::l1_median() {
-	ui.InfoText->append("\n!!L1_median start!!\n");
-	// TO-DO：参数获取
-	int sampleNum = 1000;
-	double h_rate = 0.5;
-	double replusion_u = 0.35;
-	// 初始采样
-	if (this->xCloud->points.size() < 1) {
-		this->xCloud = randomSampling(this->cloud, sampleNum);
-		ui.InfoText->append("--auto sampling--\n");
-	}
-	else {
-		ui.InfoText->append("--already sampled--\n");
-	}
-	
-	if (GlobalFun::synInfoWithCloud(this->xInfo, this->xCloud)!=0) {
-		ui.InfoText->append("\n[!!syn error between cloud and info!!]\n");
-		return;
-	}
-	// 初始neighborhood size
-	pcl::PointXYZ min;//用于存放三个轴的最小值
-	pcl::PointXYZ max;//用于存放三个轴的最大值
-	pcl::getMinMax3D(*cloud, min, max);
-	double dbb2 = (max.x - min.x)*(max.x - min.x)
-		+ (max.y - min.y)*(max.y - min.y)
-		+ (max.z - min.z)*(max.z - min.z);
-	double h0 = sqrt(dbb2) /pow(this->cloud->points.size(), 1.0/3);// h0= dbb/三次根号下点云点的数量
-	double h = 0.1;
-	ui.InfoText->append("\n【h:"+QString::number(h)+"】\n");
-
-	updateALLInfo(h);
-	updateDensity(this->cloud, h);
-	// 迭代收缩
-	//while (!isAllSamplesIdentified(this->xInfo)) {
-	int time = 10;
-	while (time>0) {
-		updateXPos(h, replusion_u);
-		updateALLInfo(h);
-		emit updateSignal();
-		//displaySampleCloud(this->xCloud);
-		time--;
-		// TO-DO tracing等内容
-		/*int candidateCount = 0;
-		for (size_t i = 0; i < this->xCloud->points.size(); ++i) {
-			if (this->xInfo[i].getSigma() > 0.9) {
-				xInfo[i].kind = Candidate;
-				candidateCount++;
-			}	
-		}
-		
-		if (candidateCount < 1) {
-			// 当一次扫描无法产生新的candidate时，扩大h
-			h += h_rate * h0;
-			continue;
-		}
-
-		for (size_t i = 0; i < this->xCloud->points.size(); ++i) {
-			if (this->xInfo[i].kind == Candidate) {
-				// 开始tracing,生成骨骼
-				int traceNum = tracingFromPt(i, this->xCloud);
-				if (traceNum > 4) {
-					// 生成一条骨骼
-				}
-				// 移出刚才参与过的点
-				// 设置bridge point
-			}
-			else if (this->xInfo[i].kind == Bridge) {
-				// 移出重复的bridge point
-
-
-			}
-			else if (this->xInfo[i].kind == Branch) {
-				// neighborhood 内有branch pt 则合并
-
-			}
-			else if (this->xInfo[i].kind == Sample) {
-				// 离群点判断，清除离群点
-
-			}
-		}*/
-		// TO-DO: radius更新
-	}
-	ui.InfoText->append("\n---!!L1-median finish!!---\n");
-}
-
 
 //showDemo
 void QT_PCL_Segmentation::showDemo()
@@ -544,68 +222,17 @@ void QT_PCL_Segmentation::showPCL()
 	ui.InfoText->setText(text);
 }
 
-void QT_PCL_Segmentation::segmentation()
-{
-	viewer->removeAllShapes();
-	pcl::IndicesPtr indices(new std::vector <int>);
-	pcl::PassThrough<pcl::PointXYZ> pass;
-	pass.setInputCloud(cloud);
-	pass.setFilterFieldName("z");
-	pass.setFilterLimits(0.0, 1.0);
-	pass.filter(*indices);
-
-	pcl::MinCutSegmentation<pcl::PointXYZ> seg;
-	seg.setInputCloud(cloud);
-	seg.setIndices(indices);
-
-	//ÖÐÐÄµãÉèÖÃ
-	pcl::PointCloud<pcl::PointXYZ>::Ptr foreground_points(new pcl::PointCloud<pcl::PointXYZ>());
-	pcl::PointXYZ point = median(cloud);
-	point.x += 0.1;
-	point.y += 0.1;
-	point.z += 0.1;
-	//pcl::PointXYZ point;
-	//point.x = 68.97;
-	//point.y = -18.55;
-	//point.z = 0.57;
-
-	foreground_points->points.push_back(point);
-	seg.setForegroundPoints(foreground_points);
-	//·Ö¿é²ÎÊý
-	seg.setSigma(0.25);
-
-	bool ok = true;
-	seg.setRadius(ui.Radius->toPlainText().toDouble(&ok));
-	seg.setNumberOfNeighbours(ui.NumOfNeighbor->toPlainText().toInt(&ok));
-	seg.setSourceWeight(ui.SourceWeight->toPlainText().toDouble(&ok));
-
-	std::vector <pcl::PointIndices> clusters;
-	seg.extract(clusters);
-	pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud = seg.getColoredCloud();
-
-
-	viewer->removePointCloud("cloud");
-	viewer->updatePointCloud(cloud, "cloud");
-	viewer->addPointCloud(cloud, "cloud");
-	this->color(cloud, 250, 140, 20);
-
-	viewer->removePointCloud("colored_cloud" + this->colorCloudIndex);
-	viewer->updatePointCloud<pcl::PointXYZRGB>(colored_cloud, "colored_cloud" + this->colorCloudIndex);
-	viewer->addPointCloud<pcl::PointXYZRGB>(colored_cloud, "colored_cloud" + this->colorCloudIndex);
-	this->colorCloudIndex++;
-	ui.qvtkWidget->update();
-}
 
 void QT_PCL_Segmentation::colorByAxis()
 {
 	pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud(new pcl::PointCloud <pcl::PointXYZRGB>);
 	//pcl::visualization::PCLVisualizer::Ptr rgbVis(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr colored_cloud);
-	for (size_t i = 0; i < cloud->points.size(); ++i)
+	for (size_t i = 0; i < originCloud->points.size(); ++i)
 	{
 		pcl::PointXYZRGB  pt;
-		pt.x = this->cloud->points[i].x;
-		pt.y = this->cloud->points[i].y;
-		pt.z = this->cloud->points[i].z;
+		pt.x = this->originCloud->points[i].x;
+		pt.y = this->originCloud->points[i].y;
+		pt.z = this->originCloud->points[i].z;
 		pt.r = (pt.x > 0) ? 255 : 144;
 		pt.g = (pt.y > 0) ? 127 : 255;
 		pt.b = (pt.z > 0) ? 39 : 177;
@@ -615,18 +242,6 @@ void QT_PCL_Segmentation::colorByAxis()
 	viewer->updatePointCloud<pcl::PointXYZRGB>(colored_cloud, "colored_cloud");
 	viewer->addPointCloud<pcl::PointXYZRGB>(colored_cloud, "colored_cloud");
 	ui.qvtkWidget->update();
-}
-
-void QT_PCL_Segmentation::correctCenter(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud)
-{
-	pcl::PointXYZ center(median(cloud));
-	for (size_t i = 0; i < inCloud->points.size(); ++i)
-	{
-		inCloud->points[i].x -= center.x;
-		inCloud->points[i].y -= center.y;
-		inCloud->points[i].z -= center.z;
-	}
-
 }
 
 void QT_PCL_Segmentation::color(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, int r, int g, int b)
@@ -661,27 +276,35 @@ void QT_PCL_Segmentation::displaySampleCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 8, "sample_cloud");
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1,0,0, "sample_cloud");
 	viewer->removeShape("sp0");
-	viewer->addSphere(inCloud->points[0], 0.0000006*cloud->width, 0, 135, 0, "sp0");
+	viewer->addSphere(inCloud->points[0], 0.0000006*originCloud->width, 0, 135, 0, "sp0");
 
 	ui.qvtkWidget->update();
 }
 
-void QT_PCL_Segmentation::onL1() {
-	MedialThread *mt = new MedialThread(this);
-	this->moveToThread(mt);
-	mt->start();
+// 随机采样函数
+PcPtr randomSampling(PcPtr inCloud, int num = 1000) {
+	PcPtr sampleCloud(new PointCloud<PointXYZ>);
+	int size = inCloud->points.size();
+	vector<int> nCard(size, 0);
+	for (int i = 0; i < size; ++i) {
+		nCard[i] = i;
+	}
+	random_shuffle(nCard.begin(), nCard.begin() + size);
+	for (int i = 0; i < num; ++i) {
+		sampleCloud->points.push_back(inCloud->points[nCard[i]]);
+	}
+	return sampleCloud;
 }
-
 
 void QT_PCL_Segmentation::onRandomSample() {
 	ui.InfoText->append("random sampling starts");
-	this->xCloud = randomSampling(this->cloud);
-	displaySampleCloud(this->xCloud);
-	color(this->xCloud, 155, 0, 0);
+	this->sampleCloud = randomSampling(this->originCloud);
+	displaySampleCloud(this->sampleCloud);
+	color(this->sampleCloud, 155, 0, 0);
 	ui.InfoText->append("random sampling ends");
 }
 
-pcl::PointXYZ QT_PCL_Segmentation::median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud)
+pcl::PointXYZ median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud)
 {
 	pcl::PointXYZ center(0, 0, 0);
 	// Generate the data
@@ -705,16 +328,16 @@ void QT_PCL_Segmentation::drawLine()
 	}*/
 	pcl::ModelCoefficients cylinder_coeff;
 	cylinder_coeff.values.resize(7);
-	cylinder_coeff.values[0] = cloud->points[0].x;
-	cylinder_coeff.values[1] = cloud->points[0].y;
-	cylinder_coeff.values[2] = cloud->points[0].z;
-	cylinder_coeff.values[3] = cloud->points[5].x - cloud->points[0].x;
-	cylinder_coeff.values[4] = cloud->points[5].y - cloud->points[0].y;
-	cylinder_coeff.values[5] = cloud->points[5].z - cloud->points[0].z;
-	cylinder_coeff.values[6] = 0.0000002*cloud->width;
+	cylinder_coeff.values[0] = originCloud->points[0].x;
+	cylinder_coeff.values[1] = originCloud->points[0].y;
+	cylinder_coeff.values[2] = originCloud->points[0].z;
+	cylinder_coeff.values[3] = originCloud->points[5].x - originCloud->points[0].x;
+	cylinder_coeff.values[4] = originCloud->points[5].y - originCloud->points[0].y;
+	cylinder_coeff.values[5] = originCloud->points[5].z - originCloud->points[0].z;
+	cylinder_coeff.values[6] = 0.0000002*originCloud->width;
 	viewer->addCylinder(cylinder_coeff, "axisX");
-	viewer->addSphere(cloud->points[0], 0.0000006*cloud->width, 0, 135, 0, "sphere" + 0);
-	viewer->addSphere(cloud->points[5], 0.0000006*cloud->width, 0, 135, 0, "sphere" + 5);
+	viewer->addSphere(originCloud->points[0], 0.0000006*originCloud->width, 0, 135, 0, "sphere" + 0);
+	viewer->addSphere(originCloud->points[5], 0.0000006*originCloud->width, 0, 135, 0, "sphere" + 5);
 	/*
 	cylinder_coeff.values.resize(7);
 	cylinder_coeff.values[0] = 0;
@@ -739,315 +362,6 @@ void QT_PCL_Segmentation::drawLine()
 	ui.qvtkWidget->update();
 }
 
-//void QT_PCL_Segmentation::clustering(int num) {
-//}
-
-void QT_PCL_Segmentation::kmeans() {
-	viewer->removeAllShapes();
-	int num = ui.K_1->toPlainText().toInt();
-	ui.InfoText->append("\nclustering start");
-	int avg_clusterSize = cloud->points.size() / num;
-	int avg_clusterColor = 255 / num;
-	std::vector<pcl::PointXYZ> center;
-	std::vector<pi::RGB> clusterColor(num, { 0,0,0 });
-	std::vector<int> clusterSize(num, 0);
-	this->tag.clear();
-	this->tag = std::vector<int>(cloud->points.size(), -1);
-	//³õÊ¼»¯num¸ö´ØÐÄ
-	ui.InfoText->append("\ndefault centers choosing start");
-	for (int i = 0; i < num; ++i)
-	{
-		srand((int)time(0));
-		int centerIndex = -1;
-		do {
-			centerIndex = (int)(cloud->points.size() * rand() / (RAND_MAX + 1.0));
-		} while (tag[centerIndex] != -1);
-		tag[centerIndex] = i;
-		center.push_back(cloud->points[centerIndex]);
-		//tag[centerIndex] = i;
-		clusterColor[i] = { (int)(avg_clusterColor * rand() / (RAND_MAX + 1.0)) + i * avg_clusterColor,
-							255 - (int)(avg_clusterColor * rand() / (RAND_MAX + 1.0)) - i * avg_clusterColor,
-							(int)(255 * rand() / (RAND_MAX + 1.0)) };
-	}
-
-	ui.InfoText->append("\niteration start");
-	for (size_t i = 0; i < cloud->points.size(); ++i)
-	{
-		int minIndex = (int)(num * rand() / (RAND_MAX + 1.0));
-		int minDist = distance(center[minIndex], cloud->points[i]);
-		//È·ÈÏk¸ö´ØÐÄÖÐ¾àÀë¸Ãµã×î½üµÄ
-		int iterIndex = 0;
-		for (std::vector<pcl::PointXYZ>::iterator iter = center.begin(); iter != center.end(); iter++)
-		{
-			if (distance(*iter, cloud->points[i], 1) < minDist)
-			{
-				minIndex = iterIndex;
-				minDist = distance(*iter, cloud->points[i]);
-			}
-			iterIndex++;
-		}
-		tag[i] = minIndex;
-		clusterSize[minIndex]++;
-	}
-	for (size_t iterTime = 0; iterTime < 100; iterTime++)
-	{
-		//¶ÔÃ¿¸öµã¸üÐÂËùÊôµÄÀà±ð£º tagÖÐ´æ´¢center±àºÅ
-		std::fill(clusterSize.begin(), clusterSize.end(), 0);//centerÈ«²¿ÖÃÎª0
-		for (size_t i = 0; i < cloud->points.size(); ++i)
-		{
-			int minIndex = tag[i];
-			int minDist = distance(center[minIndex], cloud->points[i], 2);
-			//È·ÈÏk¸ö´ØÐÄÖÐ¾àÀë¸Ãµã×î½üµÄ
-			int iterIndex = 0;
-			for (std::vector<pcl::PointXYZ>::iterator iter = center.begin(); iter != center.end(); iter++)
-			{
-				if (distance(*iter, cloud->points[i], 1) < minDist)
-				{
-					minIndex = iterIndex;
-					minDist = distance(*iter, cloud->points[i], 2);
-				}
-				iterIndex++;
-			}
-			tag[i] = minIndex;
-			clusterSize[minIndex]++;
-		}
-
-		//¸üÐÂcenterµÄµã
-		std::fill(center.begin(), center.end(), pcl::PointXYZ(0, 0, 0));//centerÈ«²¿ÖÃÎª0
-		for (size_t i = 0; i < cloud->points.size(); ++i)
-		{
-			center[tag[i]].x += cloud->points[i].x;
-			center[tag[i]].y += cloud->points[i].y;
-			center[tag[i]].z += cloud->points[i].z;
-		}
-		for (size_t i = 0; i < num; i++)
-		{
-			center[i].x /= clusterSize[i];
-			center[i].y /= clusterSize[i];
-			center[i].z /= clusterSize[i];
-		}
-		ui.InfoText->append("\n update(");
-		ui.InfoText->append(QString::number(iterTime));
-		ui.InfoText->append("/100)");
-	}
-	//ÉèÖÃÑÕÉ«µãÔÆ²¢Êä³ö
-	ui.InfoText->append("\n colored cloud output start");
-	/*int sphereIndex = 0;
-	for (std::vector<pcl::PointXYZ>::iterator iter = center.begin() + 1; iter != center.end(); iter++)
-	{
-		viewer->addSphere(*iter,0.0000006*cloud->width,"sphere"+sphereIndex);
-		sphereIndex++;
-	}*/
-	pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud(new pcl::PointCloud <pcl::PointXYZRGB>);
-	for (size_t i = 0; i < cloud->points.size(); ++i)
-	{
-		pcl::PointXYZRGB  pt;
-		pt.x = this->cloud->points[i].x;
-		pt.y = this->cloud->points[i].y;
-		pt.z = this->cloud->points[i].z;
-		pt.r = clusterColor[tag[i]].r;
-		pt.g = clusterColor[tag[i]].g;
-		pt.b = clusterColor[tag[i]].b;
-		colored_cloud->push_back(pt);
-	}
-	viewer->removePointCloud("cloud");
-	viewer->updatePointCloud(cloud, "cloud");
-	viewer->addPointCloud(cloud, "cloud");
-	this->color(cloud, 250, 140, 20);
-
-	viewer->removePointCloud("colored_cloud");
-	viewer->updatePointCloud<pcl::PointXYZRGB>(colored_cloud, "colored_cloud");
-	viewer->addPointCloud<pcl::PointXYZRGB>(colored_cloud, "colored_cloud");
-	ui.qvtkWidget->update();
-}
-
-double QT_PCL_Segmentation::distance(pcl::PointXYZ a, pcl::PointXYZ b, int model)
-{
-	double d2 = (a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y) + (a.z - b.z)*(a.z - b.z);
-
-	if (model == 1) {
-		return d2;
-	}
-	else if (model == 2) {
-		double theta = 100 * exp(c / pow(kmeansRadius, 2)*d2) + 1;
-		return d2 * theta;
-	}
-	else {
-		return (d2 > kmeansRadius) ? 100 : d2;
-	}
-}
-
-
-bool QT_PCL_Segmentation::skelParam(std::string params, int mode)
-{
-	this->skelCloud->points.clear();
-	this->branchLen.clear();
-	this->branchNum = 0;
-	ifstream in(params);
-	char buffer[8];
-	char bufferChar;
-	int branchLenBuffer;
-	float pos[3];
-
-	if (!in.is_open())
-	{
-		srand((int)time(0));
-		pcl::PointCloud<pcl::PointXYZ>::Ptr selectCloud;
-		selectCloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
-		this->branchNum = (int)(12 * rand() / (RAND_MAX + 1)) + 1;
-		for (int i = 0; i < this->branchNum; i++)
-		{
-			if (i == 0) this->branchLen.push_back(1);
-			else this->branchLen.push_back((int)(13 * rand() / (RAND_MAX + 1)) + 1);
-		}
-		for (int i = 0; i < this->branchNum; i++)
-		{
-			if (i == 0) this->skelCloud->points.push_back(median(cloud));
-			else
-			{
-				for (int j = 0; j < this->branchLen[i]; j++)
-				{
-					double dist = 0.0;
-					pcl::PointXYZ c_pt = this->cloud->points[(int)(this->cloud->width*rand() / (RAND_MAX + 1))];
-					for (int j = 0; j < 10; j++)
-					{
-						pcl::PointXYZ pt = this->cloud->points[(int)(this->cloud->width*rand() / (RAND_MAX + 1))];
-						dist += distance(pt, c_pt);
-					}
-					dist /= 10;
-					selectCloud->points.clear();
-					for (int j = 0; j < 1000; j++)
-					{
-						pcl::PointXYZ pt = this->cloud->points[(int)(this->cloud->width*rand() / (RAND_MAX + 1))];
-						if (distance(pt, c_pt) < dist)
-							selectCloud->points.push_back(pt);
-					}
-					this->skelCloud->points.push_back(median(selectCloud));
-					//if(mode==1) Sleep(680);
-				}
-			}
-		}
-		return false;
-	}
-	else
-	{
-		in.get(buffer, 3);//¶ÁÈ¡¡°CN ¡±
-		in >> branchNum;
-		for (int i = 0; i < branchNum; i++)
-		{
-			in.get(bufferChar);//¶ÁÈ¡»»ÐÐ·û
-			in.get(buffer, 4);//¶ÁÈ¡¡°CNN ¡±
-			in >> branchLenBuffer;
-			this->branchLen.push_back(branchLenBuffer);
-			for (int j = 0; j < branchLenBuffer; j++)
-			{
-				in >> pos[0] >> pos[1] >> pos[2];
-				srand((int)time(0));
-				pos[0] *= 0.98 + 0.04*rand() / (RAND_MAX + 1.0);
-				pos[1] *= 0.98 + 0.04*rand() / (RAND_MAX + 1.0);
-				pos[2] *= 0.98 + 0.04*rand() / (RAND_MAX + 1.0);
-				this->skelCloud->push_back(pcl::PointXYZ(pos[0], pos[1], pos[2]));
-				//if(j<10 && i<10 && mode==1) Sleep(680);
-			}
-			in.get(buffer, 4);//¶ÁÈ¡\tab
-		}
-		return true;
-	}
-}
-
-void QT_PCL_Segmentation::drawSkel()
-{
-	skelFlag = 1;
-	skelSize = ui.skelSizeValue->toPlainText().toDouble();
-	viewer->removeAllShapes();
-	skelParam(this->modelSkelName, 2);
-	pcl::ModelCoefficients cylinder_coeff;
-	cylinder_coeff.values.resize(7);
-	int len = 0, vecIndex = 0;
-	for (int i = 0; i < skelCloud->size(); i++)
-	{
-		len++;
-		if (len == 1)
-			viewer->addSphere(skelCloud->points[i], skelSize * 2, 0, 0, 135, "sphere" + std::to_string(i));
-		else if (len >= branchLen[vecIndex])
-		{
-			len = 0;
-			vecIndex++;
-			viewer->addSphere(skelCloud->points[i], skelSize * 2, 0, 0, 135, "sphere" + std::to_string(i));
-		}
-		else
-			viewer->addSphere(skelCloud->points[i], skelSize * 2, 0, 135, 0, "sphere" + std::to_string(i));
-	}
-	int index = -1;
-	for (int j = 0; j < branchNum; j++)
-	{
-		for (int i = 0; i < branchLen[j]; i++)
-		{
-			index++;
-			skelIndex++;
-			if (i == branchLen[j] - 1)
-				continue;
-			cylinder_coeff.values[0] = skelCloud->points[index].x;
-			cylinder_coeff.values[1] = skelCloud->points[index].y;
-			cylinder_coeff.values[2] = skelCloud->points[index].z;
-			cylinder_coeff.values[3] = skelCloud->points[index + 1].x - skelCloud->points[index].x;
-			cylinder_coeff.values[4] = skelCloud->points[index + 1].y - skelCloud->points[index].y;
-			cylinder_coeff.values[5] = skelCloud->points[index + 1].z - skelCloud->points[index].z;
-			cylinder_coeff.values[6] = skelSize;
-			viewer->addCylinder(cylinder_coeff, "skel" + std::to_string(skelIndex));
-			ui.InfoText->append("\nskel");
-			ui.InfoText->append(QString::number(skelIndex));
-		}
-	}
-	Sleep(6800);
-	int pos = cloudPath.find_last_of('/');
-	std::string s(cloudPath.substr(pos + 1));
-	s = s.substr(0, s.length() - 4);
-	ui.InfoText->append("\n物体类别:\n");
-	ui.InfoText->append(QString::fromStdString(s));
-	ui.qvtkWidget->update();
-}
-
-void QT_PCL_Segmentation::reDrawSkel()
-{
-	if (skelFlag == 2)
-		skelParam(this->modelSkelName + "_2", 2);
-	else
-		skelParam(this->modelSkelName, 2);
-	skelSize = ui.skelSizeValue->toPlainText().toDouble();
-	viewer->removeAllShapes();
-	pcl::ModelCoefficients cylinder_coeff;
-	cylinder_coeff.values.resize(7);
-	int index = -1;
-	for (int j = 0; j < branchNum; ++j)
-	{
-		for (int i = 0; i < branchLen[j]; ++i)
-		{
-			index++;
-			skelIndex++;
-			if (i == branchLen[j] - 1)
-				continue;
-			cylinder_coeff.values[0] = skelCloud->points[index].x;
-			cylinder_coeff.values[1] = skelCloud->points[index].y;
-			cylinder_coeff.values[2] = skelCloud->points[index].z;
-			cylinder_coeff.values[3] = skelCloud->points[index + 1].x - skelCloud->points[index].x;
-			cylinder_coeff.values[4] = skelCloud->points[index + 1].y - skelCloud->points[index].y;
-			cylinder_coeff.values[5] = skelCloud->points[index + 1].z - skelCloud->points[index].z;
-			cylinder_coeff.values[6] = skelSize;
-			viewer->addCylinder(cylinder_coeff, "skel" + std::to_string(skelIndex));
-			ui.InfoText->append("\nskel");
-			ui.InfoText->append(QString::number(skelIndex));
-		}
-	}
-	int pos = cloudPath.find_last_of('/');
-	std::string s(cloudPath.substr(pos + 1));
-	s = s.substr(0, s.length() - 4);
-	ui.InfoText->append("\n物体类别:\n");
-	ui.InfoText->append(QString::fromStdString(s));
-	ui.qvtkWidget->update();
-}
-
-
 void QT_PCL_Segmentation::clearPointCloud()
 {
 	viewer->removeAllPointClouds();
@@ -1059,166 +373,10 @@ void QT_PCL_Segmentation::clearPointCloud()
 void QT_PCL_Segmentation::resetPointCloud()
 {
 	viewer->removeAllShapes();
-	this->color(cloud, 250, 140, 20);
+	this->color(originCloud, 250, 140, 20);
 	viewer->resetCamera();
 	ui.qvtkWidget->update();
 }
-
-void QT_PCL_Segmentation::connectSkel(int i, int j, pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud)
-{
-	viewer->removeAllShapes();
-	pcl::ModelCoefficients cylinder_coeff;
-	cylinder_coeff.values.resize(7);
-	int index = -1;
-	for (int j = 0; j < branchNum; ++j)
-	{
-		for (int i = 0; i < branchLen[j]; ++i)
-		{
-			index++;
-			skelIndex++;
-			if (i == branchLen[j] - 1)
-				continue;
-			cylinder_coeff.values[0] = skelCloud->points[index].x;
-			cylinder_coeff.values[1] = skelCloud->points[index].y;
-			cylinder_coeff.values[2] = skelCloud->points[index].z;
-			cylinder_coeff.values[3] = skelCloud->points[index + 1].x - skelCloud->points[index].x;
-			cylinder_coeff.values[4] = skelCloud->points[index + 1].y - skelCloud->points[index].y;
-			cylinder_coeff.values[5] = skelCloud->points[index + 1].z - skelCloud->points[index].z;
-			cylinder_coeff.values[6] = skelSize;
-			viewer->addCylinder(cylinder_coeff, "skel" + std::to_string(skelIndex));
-			ui.InfoText->append("\nskel");
-			ui.InfoText->append(QString::number(skelIndex));
-		}
-	}
-	ui.qvtkWidget->update();
-}
-
-void QT_PCL_Segmentation::KNNsmooth()
-{
-	std::vector<int> KNNtag(this->cloud->points.size(), 0);
-	std::vector<int> KNNindex(ui.K_1->toPlainText().toDouble(), -1);
-	std::vector<double> KNNdist(ui.K_1->toPlainText().toDouble(), 10000);
-	for (int i = 0; i < this->cloud->points.size(); ++i)
-	{
-		for (int j = 0; j < this->cloud->points.size(); ++j)
-		{
-			//选择KNN
-			std::vector<double>::iterator maxDist = std::max_element(KNNdist.begin(), KNNdist.end());
-			if (distance(this->cloud->points[i], this->cloud->points[j]) < *maxDist && KNNtag[j] == -1) {
-				*maxDist = distance(this->cloud->points[i], this->cloud->points[j]);
-				KNNindex[std::distance(KNNdist.begin(), maxDist)] = j;
-			}
-		}
-		//刷新KNN标记&KNN平滑
-		std::vector<int> tempTag;
-		for (std::vector<int>::iterator iter = KNNindex.begin(); iter != KNNindex.end(); ++iter)
-		{
-			tempTag.push_back(this->tag[*iter]);
-			KNNtag[*iter] = this->tag[*iter];
-		}
-		std::sort(tempTag.begin(), tempTag.end());
-		int maxCount = 0;
-		int pre = -1;
-		int preContent = -1, preCount = 0;
-		for (std::vector<int>::iterator iter = KNNindex.begin(); iter != KNNindex.end(); ++iter)
-		{
-
-			if (KNNtag[*iter] == pre)
-				maxCount++;
-			else
-			{
-				maxCount = 1;
-			}
-			if (maxCount > preCount)
-			{
-				preContent = KNNtag[*iter];
-				preCount = maxCount;
-			}
-			pre = KNNtag[*iter];
-		}
-		for (std::vector<int>::iterator iter = KNNindex.begin(); iter != KNNindex.end(); ++iter)
-		{
-			tag[*iter] = preContent;
-		}
-	}
-
-}
-
-bool QT_PCL_Segmentation::BayesTest(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud)
-{
-	int index = 0;
-	int successCount = 0, failCount = 0;
-	double threshold = this->skelCloud->is_dense;
-	for (int i = 0; i < this->branchNum; ++i)
-	{
-		double p_X_omega = 0;
-		for (int j = 0; j < this->branchLen[i]; ++j)
-		{
-			float *p_X_theta = this->skelCloud->points[index].data;
-			double p_K_G = this->skelCloud->points[index].x + this->skelCloud->points[index].y + this->skelCloud->points[index].z;
-			p_X_omega += *p_X_theta * p_K_G;
-			if (p_X_omega > threshold) { this->connectSkel(i, j, cloud); successCount++; }
-			else { failCount++; }
-			index++;
-		}
-	}
-	return (successCount > failCount);
-}
-
-void QT_PCL_Segmentation::BayesSkel()
-{
-	skelFlag = 2;
-	skelSize = ui.skelSizeValue->toPlainText().toDouble();
-
-	viewer->removeAllShapes();
-	skelParam(this->modelSkelName + "_2", 2);
-	pcl::ModelCoefficients cylinder_coeff;
-	cylinder_coeff.values.resize(7);
-	int len = 0, vecIndex = 0;
-	for (int i = 0; i < skelCloud->size(); i++)
-	{
-		len++;
-		if (len == 1)
-			viewer->addSphere(skelCloud->points[i], skelSize * 2, 0, 0, 135, "sphere" + std::to_string(i));
-		else if (len >= branchLen[vecIndex])
-		{
-			len = 0;
-			vecIndex++;
-			viewer->addSphere(skelCloud->points[i], skelSize * 2, 0, 0, 135, "sphere" + std::to_string(i));
-		}
-		else
-			viewer->addSphere(skelCloud->points[i], skelSize * 2, 0, 135, 0, "sphere" + std::to_string(i));
-	}
-	int index = -1;
-	for (int j = 0; j < branchNum; j++)
-	{
-		for (int i = 0; i < branchLen[j]; i++)
-		{
-			index++;
-			skelIndex++;
-			if (i == branchLen[j] - 1)
-				continue;
-			cylinder_coeff.values[0] = skelCloud->points[index].x;
-			cylinder_coeff.values[1] = skelCloud->points[index].y;
-			cylinder_coeff.values[2] = skelCloud->points[index].z;
-			cylinder_coeff.values[3] = skelCloud->points[index + 1].x - skelCloud->points[index].x;
-			cylinder_coeff.values[4] = skelCloud->points[index + 1].y - skelCloud->points[index].y;
-			cylinder_coeff.values[5] = skelCloud->points[index + 1].z - skelCloud->points[index].z;
-			cylinder_coeff.values[6] = skelSize;
-			viewer->addCylinder(cylinder_coeff, "skel" + std::to_string(skelIndex));
-			ui.InfoText->append("\nskel");
-			ui.InfoText->append(QString::number(skelIndex));
-		}
-	}
-	int pos = cloudPath.find_last_of('/');
-	std::string s(cloudPath.substr(pos + 1));
-	s = s.substr(0, s.length() - 4);
-	ui.InfoText->append("\n物体类别:\n");
-	ui.InfoText->append(QString::fromStdString(s));
-	ui.qvtkWidget->update();
-}
-
-
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr QT_PCL_Segmentation::normalize(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud, bool divMode) {
 	pcl::PointXYZ maxValue, minValue, midValue, scaleValue;
@@ -1263,42 +421,24 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr QT_PCL_Segmentation::normalize(pcl::PointClo
 	return inCloud;
 }
 
-void QT_PCL_Segmentation::normalizeOfSkel() {
-	normalize(this->cloud);
-	for (pcl::PointXYZ pt : skelCloud->points) {
-		pt.x -= midPoint.x;
-		pt.y -= midPoint.y;
-		pt.z -= midPoint.z;
-		pt.x /= skelScale;
-		pt.y /= skelScale;
-		pt.z /= skelScale;
-	}//move it to zero and scale in
-
-	viewer->removeAllPointClouds();
-	viewer->removePointCloud("cloud");
-	viewer->updatePointCloud(cloud, "cloud");
-	viewer->addPointCloud(cloud, "cloud");
-	viewer->resetCamera();
-	this->color(cloud, 250, 140, 20);
-}
 
 void QT_PCL_Segmentation::noise() {
 	int dx = ui.noise->toPlainText().toInt();
 	//showDemo();
-	cloudfiltered->points.resize(cloud->points.size());//将点云的cloud的size赋值给噪声
-	cloudfiltered->header = cloud->header;
-	cloudfiltered->width = cloud->width;
-	cloudfiltered->height = cloud->height;
+	cloudfiltered->points.resize(originCloud->points.size());//将点云的cloud的size赋值给噪声
+	cloudfiltered->header = originCloud->header;
+	cloudfiltered->width = originCloud->width;
+	cloudfiltered->height = originCloud->height;
 	boost::mt19937 rng;
 	rng.seed(static_cast<unsigned int>(time(0)));
 	boost::normal_distribution<> nd(0, 2);
 	boost::variate_generator<boost::mt19937&, boost::normal_distribution<>> var_nor(rng, nd);
 	//添加噪声
-	for (size_t point_i = 0; point_i < cloud->points.size(); ++point_i)
+	for (size_t point_i = 0; point_i < originCloud->points.size(); ++point_i)
 	{
-		cloudfiltered->points[point_i].x = cloud->points[point_i].x + static_cast<float> (var_nor()) / dx;
-		cloudfiltered->points[point_i].y = cloud->points[point_i].y + static_cast<float> (var_nor()) / dx;
-		cloudfiltered->points[point_i].z = cloud->points[point_i].z + static_cast<float> (var_nor()) / dx;
+		cloudfiltered->points[point_i].x = originCloud->points[point_i].x + static_cast<float> (var_nor()) / dx;
+		cloudfiltered->points[point_i].y = originCloud->points[point_i].y + static_cast<float> (var_nor()) / dx;
+		cloudfiltered->points[point_i].z = originCloud->points[point_i].z + static_cast<float> (var_nor()) / dx;
 	}
 	viewer->removeAllPointClouds();
 	viewer->removePointCloud("cloudfiltered");
@@ -1321,7 +461,7 @@ void QT_PCL_Segmentation::outlier() {
 		if (rand() / (RAND_MAX + 1.0) > 0.5) pt.x *= -1;
 		if (rand() / (RAND_MAX + 1.0) > 0.5) pt.y *= -1;
 		if (rand() / (RAND_MAX + 1.0) > 0.5) pt.z *= -1;
-		viewer->addSphere(pt, skelSize * 0.7, 0, 0, 135, "sphere" + std::to_string(i + 100));
+		viewer->addSphere(pt, 0.5, 0, 0, 135, "sphere" + std::to_string(i + 100));
 		pointAddCloud->points.push_back(pt);
 	}
 	viewer->removePointCloud("pointAddCloud");
@@ -1443,7 +583,7 @@ void QT_PCL_Segmentation::off_ply() {
 
 void QT_PCL_Segmentation::offReader(std::string filename)
 {
-	this->cloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
+	this->originCloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
 	ifstream in(filename);
 	char buffer[8];
 	char bufferChar;
@@ -1460,11 +600,11 @@ void QT_PCL_Segmentation::offReader(std::string filename)
 		in >> pos[0] >> pos[1] >> pos[2];
 		if (bufferChar == 'N')
 			in >> pos[3] >> pos[4] >> pos[5];
-		this->cloud->points.push_back(pcl::PointXYZ(pos[0], pos[1], pos[2]));
+		this->originCloud->points.push_back(pcl::PointXYZ(pos[0], pos[1], pos[2]));
 	}
 	pcl::PLYWriter writer;
 	//writer.write(filename.substr(0,filename.length()-4)+".ply", *cloud);
-	pcl::io::savePLYFileASCII(filename.substr(0, filename.length() - 4) + ".ply", *cloud);
+	pcl::io::savePLYFileASCII(filename.substr(0, filename.length() - 4) + ".ply", *originCloud);
 }
 
 void QT_PCL_Segmentation::onOpenOff() {
@@ -1477,43 +617,25 @@ void QT_PCL_Segmentation::onOpenOff() {
 	//off_ply();
 
 	viewer->removePointCloud("cloud");
-	viewer->updatePointCloud(cloud, "cloud");
-	viewer->addPointCloud(cloud, "cloud");
+	viewer->updatePointCloud(originCloud, "cloud");
+	viewer->addPointCloud(originCloud, "cloud");
 	viewer->resetCamera();
-	this->color(cloud, 250, 140, 20);
+	this->color(originCloud, 250, 140, 20);
 }
 
 void QT_PCL_Segmentation::onSaveNoff() {
 	saveNoff(this->cloudPath);
 }
 
-void QT_PCL_Segmentation::saveNoff(std::string filename) {
-	computeNormal();
-	ofstream out;
-	out.open(filename.substr(0, filename.length() - 3) + "off", ios::trunc);
-	out << "NOFF" << endl;
-	out << this->cloud->points.size() << " " << 0 << endl;
-	this->cloud = normalize(this->cloud, false);
-	for (int i = 0; i < this->cloud->points.size(); ++i)
-	{
-		out << cloud->points[i].x << " " << cloud->points[i].y << " " << cloud->points[i].z << " "
-			<< -1 * ((normalCloud->points[i].normal_x == NAN) ? 0.1 : normalCloud->points[i].normal_x) << " "
-			<< -1 * ((normalCloud->points[i].normal_y == NAN) ? -0.1 : normalCloud->points[i].normal_y) << " "
-			<< -1 * ((normalCloud->points[i].normal_z == NAN) ? 0.1 : normalCloud->points[i].normal_z) << " "
-			<< endl;
-	}
-	out.close();
-}
-
 void QT_PCL_Segmentation::computeNormal() {
 	//计算法线
 	pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud(new pcl::PointCloud <pcl::PointXYZRGB>);
-	for (size_t i = 0; i < cloud->points.size(); ++i)
+	for (size_t i = 0; i < originCloud->points.size(); ++i)
 	{
 		pcl::PointXYZRGB  pt;
-		pt.x = cloud->points[i].x;
-		pt.y = cloud->points[i].y;
-		pt.z = cloud->points[i].z;
+		pt.x = originCloud->points[i].x;
+		pt.y = originCloud->points[i].y;
+		pt.z = originCloud->points[i].z;
 		pt.r = 250;
 		pt.g = 140;
 		pt.b = 20;
@@ -1527,6 +649,25 @@ void QT_PCL_Segmentation::computeNormal() {
 	ne.setRadiusSearch(0.05);
 	ne.compute(*this->normalCloud);
 }
+
+void QT_PCL_Segmentation::saveNoff(std::string filename) {
+	computeNormal();
+	ofstream out;
+	out.open(filename.substr(0, filename.length() - 3) + "off", ios::trunc);
+	out << "NOFF" << endl;
+	out << this->originCloud->points.size() << " " << 0 << endl;
+	this->originCloud = normalize(this->originCloud, false);
+	for (int i = 0; i < this->originCloud->points.size(); ++i)
+	{
+		out << originCloud->points[i].x << " " << originCloud->points[i].y << " " << originCloud->points[i].z << " "
+			<< -1 * ((normalCloud->points[i].normal_x == NAN) ? 0.1 : normalCloud->points[i].normal_x) << " "
+			<< -1 * ((normalCloud->points[i].normal_y == NAN) ? -0.1 : normalCloud->points[i].normal_y) << " "
+			<< -1 * ((normalCloud->points[i].normal_z == NAN) ? 0.1 : normalCloud->points[i].normal_z) << " "
+			<< endl;
+	}
+	out.close();
+}
+
 
 void QT_PCL_Segmentation::onDownSample() {
 	downSample(cloudPath);
@@ -1542,22 +683,22 @@ void QT_PCL_Segmentation::onDownSample() {
 	pcl::PCDReader rd;
 	std::string file_name = cloudPath.substr(0, cloudPath.length() - 4) + "_down.pcd";
 	this->cloudPath = file_name;
-	this->modelSkelName = file_name.substr(0, file_name.length() - 4);
+	//this->modelSkelName = file_name.substr(0, file_name.length() - 4);
 	rd.readHeader(file_name, cloud2, origin, orientation, pcd_version, data_type, data_idx);
 	if (data_type == 0)
-		pcl::io::loadPCDFile(file_name, *cloud);
+		pcl::io::loadPCDFile(file_name, *originCloud);
 	else if (data_type == 2) {
 		pcl::PCDReader reader;
-		reader.read<pcl::PointXYZ>(file_name, *cloud);
+		reader.read<pcl::PointXYZ>(file_name, *originCloud);
 	}
-	pcl::io::savePLYFileASCII(file_name.substr(0, file_name.length() - 4) + ".ply", *cloud);
+	pcl::io::savePLYFileASCII(file_name.substr(0, file_name.length() - 4) + ".ply", *originCloud);
 
 	clearPointCloud();
 	viewer->removePointCloud("cloud");
-	viewer->updatePointCloud(cloud, "cloud");
-	viewer->addPointCloud(cloud, "cloud");
+	viewer->updatePointCloud(originCloud, "cloud");
+	viewer->addPointCloud(originCloud, "cloud");
 	viewer->resetCamera();
-	this->color(cloud, 250, 140, 20);
+	this->color(originCloud, 250, 140, 20);
 }
 
 void QT_PCL_Segmentation::downSample(std::string path) {
@@ -1582,15 +723,15 @@ void QT_PCL_Segmentation::downSample(std::string path) {
 }
 
 void QT_PCL_Segmentation::onUpdate() {
-	this->displaySampleCloud(this->xCloud);
-	ui.InfoText->append(
+	this->displaySampleCloud(this->sampleCloud);
+	/*ui.InfoText->append(
 		"坐标: (" + 
-		QString::number(this->xCloud->points[0].x) + ", " + 
-		QString::number(this->xCloud->points[0].y) + ", " + 
-		QString::number(this->xCloud->points[0].z) + ")\n"+
+		QString::number(this->sampleCloud->points[0].x) + ", " + 
+		QString::number(this->sampleCloud->points[0].y) + ", " + 
+		QString::number(this->sampleCloud->points[0].z) + ")\n"+
 		"alhpa size:" + QString::number(this->xInfo[0].alpha.size()) +
 		"beta size:" + QString::number(this->xInfo[0].beta.size())
-	);
+	);*/
 }
 
 
@@ -1598,12 +739,12 @@ void QT_PCL_Segmentation::onRandomMissing() {
 	pcl::PointCloud <pcl::PointXYZ>::Ptr missingCloud(new pcl::PointCloud <pcl::PointXYZ>);
 	for (int i = 1; i < 5; ++i) {
 		missingCloud->clear();
-		for (size_t i = 0; i < cloud->points.size(); ++i)
+		for (size_t i = 0; i < originCloud->points.size(); ++i)
 		{
 			pcl::PointXYZ  pt;
-			pt.x = cloud->points[i].x;
-			pt.y = cloud->points[i].y;
-			pt.z = cloud->points[i].z;
+			pt.x = originCloud->points[i].x;
+			pt.y = originCloud->points[i].y;
+			pt.z = originCloud->points[i].z;
 			if (rand() / (RAND_MAX + 1.0f) > 0.3)
 				missingCloud->push_back(pt);
 		}
@@ -1616,7 +757,7 @@ void QT_PCL_Segmentation::onOpenTxt() {
 		tr("Open PointCloud"), ".",
 		tr("Open PCD files(*.txt)"));
 	std::string file_name = fileName.toStdString();
-	this->cloud->points.clear();
+	this->originCloud->points.clear();
 
 	ifstream in(file_name);
 
@@ -1624,19 +765,19 @@ void QT_PCL_Segmentation::onOpenTxt() {
 	for (int i = 0; i < 24000; ++i)
 	{
 		in >> pos[0] >> pos[1] >> pos[2];
-		this->cloud->push_back(pcl::PointXYZ(pos[0], pos[1], pos[2]));
+		this->originCloud->push_back(pcl::PointXYZ(pos[0], pos[1], pos[2]));
 	}
 
 	viewer->removePointCloud("cloud");
-	viewer->updatePointCloud(cloud, "cloud");
-	viewer->addPointCloud(cloud, "cloud");
+	viewer->updatePointCloud(originCloud, "cloud");
+	viewer->addPointCloud(originCloud, "cloud");
 	viewer->resetCamera();
-	this->color(cloud, 250, 140, 20);
+	this->color(originCloud, 250, 140, 20);
 
-	pcl::io::savePLYFileASCII(file_name.substr(0, file_name.length() - 4) + ".ply", *cloud);
+	pcl::io::savePLYFileASCII(file_name.substr(0, file_name.length() - 4) + ".ply", *originCloud);
 }
 
 void QT_PCL_Segmentation::onSavePLY() {
-	pcl::io::savePLYFileASCII(this->cloudPath.substr(0, this->cloudPath.length() - 4) + ".ply", *cloud);
+	pcl::io::savePLYFileASCII(this->cloudPath.substr(0, this->cloudPath.length() - 4) + ".ply", *originCloud);
 }
 
