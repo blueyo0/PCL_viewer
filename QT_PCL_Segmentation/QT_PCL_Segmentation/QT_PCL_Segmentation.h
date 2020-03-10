@@ -15,6 +15,8 @@
 #include "SamplePoint.h"
 #include "ParameterMgr.h"
 
+#include "PointCloudAlgorithm.h"
+
 #include <pcl/common/projection_matrix.h>
 #include <pcl/ModelCoefficients.h>
 #include <pcl/io/pcd_io.h>
@@ -50,9 +52,6 @@ class QT_PCL_Segmentation : public QMainWindow
 {
 	Q_OBJECT
 
-signals:
-	void updateSignal();
-
 public:
 	QT_PCL_Segmentation(QWidget *parent = Q_NULLPTR);
 
@@ -60,6 +59,7 @@ private:
 	Ui::QT_PCL_SegmentationClass ui;
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
 	ParameterMgr *paraMgr;
+	PointCloudAlgorithm *algorithm;
 
 private:
 	PointCloud<PointXYZ>::Ptr originCloud;
@@ -98,9 +98,9 @@ public:
 	//double kmeansRadius,c;//distance衰减函数的参数
 	//void correctCenter(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
 	//double distance(pcl::PointXYZ a, pcl::PointXYZ b, int model = 1);
+	//pcl::PointXYZ median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
 
 	void initialVtkWidget();
-	//pcl::PointXYZ median(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud);
 	PointCloud<PointXYZ>::Ptr normalize(PointCloud<PointXYZ>::Ptr inCloud, bool divMode = true);
 	void offReader(string filename);
 	void computeNormal();
@@ -108,6 +108,7 @@ public:
 	void off_obj(string input);
 	void downSample(string path);
 	void displaySampleCloud(PointCloud<PointXYZ>::Ptr);
+	void displaySelectedCloud(const PointCloud<PointXYZ>::Ptr, const pi::RGB, double, string);
 
 	/*void updateDensity(pcl::PointCloud<pcl::PointXYZ>::Ptr, double);
 	void updateALLNeighbors(PcPtr qc, PcPtr xc, double radius, vector<SamplePoint> &info);
@@ -138,7 +139,9 @@ private slots:
 
 	//void segmentation(); // pcl库的min-cut 
 	//void kmeans();
-	//void onL1();
+
+	void onL1();
+	void onMoving();
 
 	void noise();
 	void outlier();

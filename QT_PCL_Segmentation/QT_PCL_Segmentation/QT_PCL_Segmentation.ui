@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1334</width>
-    <height>988</height>
+    <height>991</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -110,6 +110,25 @@
       <string>random</string>
      </property>
     </widget>
+    <widget class="QPushButton" name="segButton_4">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>10</y>
+       <width>91</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>黑体</family>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>wlop</string>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QDockWidget" name="segDock">
@@ -192,7 +211,7 @@
       </font>
      </property>
      <property name="text">
-      <string>over-seg</string>
+      <string>Kmeans</string>
      </property>
     </widget>
     <widget class="QTextEdit" name="Radius">
@@ -815,23 +834,10 @@ p, li { white-space: pre-wrap; }
     <property name="styleSheet">
      <string notr="true"/>
     </property>
-    <widget class="QLabel" name="label_3">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>10</y>
-       <width>141</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;skeletonization&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-     </property>
-    </widget>
     <widget class="QPushButton" name="drawButton">
      <property name="geometry">
       <rect>
-       <x>200</x>
+       <x>10</x>
        <y>10</y>
        <width>91</width>
        <height>31</height>
@@ -948,6 +954,25 @@ p, li { white-space: pre-wrap; }
      </property>
      <property name="text">
       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;L1-medial skeleton parameters&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="drawButton_2">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>10</y>
+       <width>91</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>黑体</family>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>moving</string>
      </property>
     </widget>
    </widget>

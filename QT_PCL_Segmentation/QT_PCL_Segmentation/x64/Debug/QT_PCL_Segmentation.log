@@ -1,12 +1,4 @@
-﻿  QT_PCL_Segmentation.cpp
-e:\gitrepos\pcl_viewer\qt_pcl_segmentation\qt_pcl_segmentation\qt_pcl_segmentation.cpp : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+﻿  TestMoving.cpp
   Unknown compiler version - please run the configure tests and report the results
 d:\pcl\pcl 1.8.1\include\pcl-1.8\pcl\point_traits.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-d:\pcl\pcl 1.8.1\include\pcl-1.8\pcl\visualization\interactor_style.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-d:\pcl\pcl 1.8.1\include\pcl-1.8\pcl\visualization\pcl_visualizer.h(1584): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-  moc_QT_PCL_Segmentation.cpp
-  Unknown compiler version - please run the configure tests and report the results
-d:\pcl\pcl 1.8.1\include\pcl-1.8\pcl\point_traits.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-d:\pcl\pcl 1.8.1\include\pcl-1.8\pcl\visualization\interactor_style.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-d:\pcl\pcl 1.8.1\include\pcl-1.8\pcl\visualization\pcl_visualizer.h(1584): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
   QT_PCL_Segmentation.vcxproj -> E:\gitRepos\PCL_viewer\QT_PCL_Segmentation\x64\Debug\QT_PCL_Segmentation.exe

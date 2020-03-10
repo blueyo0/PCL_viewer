@@ -16,7 +16,8 @@ VTK_MODULE_INIT(vtkInteractionStyle)
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
 
-#include "MedialThread.h"
+#include "AlgorithmThread.h"
+#include "TestMoving.h"
 
 
 using namespace std;
@@ -54,7 +55,8 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	//connect(ui.segButton_2, SIGNAL(clicked()), this, SLOT(segmentation()));
 	connect(ui.segButton_3, SIGNAL(clicked()), this, SLOT(onRandomSample()));
 
-	//connect(ui.drawButton, SIGNAL(clicked()), this, SLOT(onL1()));
+	connect(ui.drawButton, SIGNAL(clicked()), this, SLOT(onL1()));
+	connect(ui.drawButton_2, SIGNAL(clicked()), this, SLOT(onMoving()));
 	//connect(ui.drawButton_6, SIGNAL(clicked()), this, SLOT(BayesSkel()));
 	// connect(ui.drawButton_3, SIGNAL(clicked()), this, SLOT(reDrawSkel()));
 
@@ -66,18 +68,16 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 	connect(ui.outlierButton, SIGNAL(clicked()), this, SLOT(outlier()));
 	connect(ui.downSampleButton, SIGNAL(clicked()), this, SLOT(onDownSample()));
 
-	connect(this, SIGNAL(updateSignal()), this, SLOT(onUpdate()));
-
 }
 
 void QT_PCL_Segmentation::initialVtkWidget()
 {
 	originCloud.reset(new PointCloud<PointXYZ>);
 	sampleCloud.reset(new PointCloud<PointXYZ>);
+	cloudfiltered.reset(new pcl::PointCloud<pcl::PointXYZ>);
+	normalCloud.reset(new pcl::PointCloud<pcl::Normal>);
 
 	//skelCloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
-	//cloudfiltered.reset(new pcl::PointCloud<pcl::PointXYZ>);
-	//normalCloud.reset(new pcl::PointCloud<pcl::Normal>);
 	viewer.reset(new pcl::visualization::PCLVisualizer("viewer", false));
 	//viewer->addPointCloud(cloud, "cloud");
 
@@ -93,6 +93,32 @@ void QT_PCL_Segmentation::initialVtkWidget()
 	ui.qvtkWidget->update();
 
 	this->tabifyDockWidget(ui.skelDock, ui.skelDock2);
+}
+
+void QT_PCL_Segmentation::onL1() 
+{
+
+}
+
+void QT_PCL_Segmentation::onMoving()
+{
+	this->paraMgr->addSubSet("TestMoving");
+	this->paraMgr->add("iterate_time", 5);
+	this->paraMgr->add("moving_length", 0.1);
+	ParameterSet para = this->paraMgr->getSubSet("TestMoving");
+
+	if (this->algorithm != NULL) delete this->algorithm;
+	if (this->sampleCloud->points.size() < 1) onRandomSample();
+	this->algorithm = new TestMoving(para, this->sampleCloud);
+	if (!connect(this->algorithm, SIGNAL(iterateSignal()), this, SLOT(onUpdate())))
+	{
+		ui.InfoText->append("algorithm connect wrong!");
+	}
+
+	AlgorithmThread *at = new AlgorithmThread(this->algorithm);
+	this->moveToThread(at);
+	at->start();
+
 }
 
 //onOpen
@@ -140,11 +166,8 @@ void QT_PCL_Segmentation::onOpen()
 		//correctCenter(cloud);
 		//pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> single_color(cloud, 0, 255, 0);		
 
-		viewer->removePointCloud("cloud");
-		viewer->updatePointCloud(originCloud, "cloud");
-		viewer->addPointCloud(originCloud, "cloud");
+		this->displaySelectedCloud(originCloud, { 250, 140, 20 }, 1, "cloud");
 		viewer->resetCamera();
-		this->color(originCloud, 250, 140, 20);
 		//ui.qvtkWidget->update();
 
 
@@ -281,6 +304,18 @@ void QT_PCL_Segmentation::displaySampleCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr
 	ui.qvtkWidget->update();
 }
 
+void QT_PCL_Segmentation::displaySelectedCloud (const PointCloud<PointXYZ>::Ptr inCloud,
+												const pi::RGB color, double size, string tag) {
+	viewer->removePointCloud(tag);
+	viewer->addPointCloud(inCloud, tag);
+	viewer->setPointCloudRenderingProperties(visualization::PCL_VISUALIZER_POINT_SIZE, size, tag);
+	viewer->setPointCloudRenderingProperties(visualization::PCL_VISUALIZER_COLOR, 
+											 color.r/255.0, color.g/255.0, color.b/255.0, tag);
+	ui.qvtkWidget->update();
+}
+
+
+
 // 随机采样函数
 PcPtr randomSampling(PcPtr inCloud, int num = 1000) {
 	PcPtr sampleCloud(new PointCloud<PointXYZ>);
@@ -300,7 +335,6 @@ void QT_PCL_Segmentation::onRandomSample() {
 	ui.InfoText->append("random sampling starts");
 	this->sampleCloud = randomSampling(this->originCloud);
 	displaySampleCloud(this->sampleCloud);
-	color(this->sampleCloud, 155, 0, 0);
 	ui.InfoText->append("random sampling ends");
 }
 
@@ -364,16 +398,20 @@ void QT_PCL_Segmentation::drawLine()
 
 void QT_PCL_Segmentation::clearPointCloud()
 {
+	this->sampleCloud.reset(new PointCloud<PointXYZ>);
+	this->cloudfiltered.reset(new PointCloud<PointXYZ>);
+	this->normalCloud.reset(new PointCloud<Normal>);
 	viewer->removeAllPointClouds();
 	viewer->removeAllShapes();
+	this->displaySelectedCloud(originCloud, { 250, 140, 20 }, 1, "cloud");
 	viewer->resetCamera();
+
 	ui.qvtkWidget->update();
 }
 
+
 void QT_PCL_Segmentation::resetPointCloud()
 {
-	viewer->removeAllShapes();
-	this->color(originCloud, 250, 140, 20);
 	viewer->resetCamera();
 	ui.qvtkWidget->update();
 }
@@ -440,14 +478,9 @@ void QT_PCL_Segmentation::noise() {
 		cloudfiltered->points[point_i].y = originCloud->points[point_i].y + static_cast<float> (var_nor()) / dx;
 		cloudfiltered->points[point_i].z = originCloud->points[point_i].z + static_cast<float> (var_nor()) / dx;
 	}
-	viewer->removeAllPointClouds();
-	viewer->removePointCloud("cloudfiltered");
-	viewer->updatePointCloud(cloudfiltered, "cloudfiltered");
-	viewer->addPointCloud(cloudfiltered, "cloudfiltered");
-	//viewer->resetCamera();
-	this->color(cloudfiltered, 250, 140, 20);
-	//this->color(cloudfiltered, 255, 0, 0);
-	pcl::io::savePLYFileASCII(this->cloudPath.substr(0, this->cloudPath.length() - 4) + "_noise.ply", *cloudfiltered);
+	 
+	this->displaySelectedCloud(cloudfiltered, { 255, 0, 0 }, 1, "noises");
+	//pcl::io::savePLYFileASCII(this->cloudPath.substr(0, this->cloudPath.length() - 4) + "_noise.ply", *cloudfiltered);
 }
 
 void QT_PCL_Segmentation::outlier() {
@@ -455,20 +488,16 @@ void QT_PCL_Segmentation::outlier() {
 	srand((int)time(0));
 	pcl::PointCloud<pcl::PointXYZ>::Ptr pointAddCloud(new pcl::PointCloud<pcl::PointXYZ>());
 	for (int i = 0; i < ui.outlier->toPlainText().toInt(); ++i) {
-		pcl::PointXYZ pt((0.5 * rand() / (RAND_MAX + 1.0) + 0.5)*0.8,
-			(0.5 * rand() / (RAND_MAX + 1.0) + 0.5)*0.8,
-			(0.5 * rand() / (RAND_MAX + 1.0) + 0.5)*0.8);
+		pcl::PointXYZ pt((0.5 * rand() / (RAND_MAX + 1.0) + 0.5)*0.7,
+						 (0.5 * rand() / (RAND_MAX + 1.0) + 0.5)*0.7,
+						 (0.5 * rand() / (RAND_MAX + 1.0) + 0.5)*0.7);
 		if (rand() / (RAND_MAX + 1.0) > 0.5) pt.x *= -1;
 		if (rand() / (RAND_MAX + 1.0) > 0.5) pt.y *= -1;
 		if (rand() / (RAND_MAX + 1.0) > 0.5) pt.z *= -1;
-		viewer->addSphere(pt, 0.5, 0, 0, 135, "sphere" + std::to_string(i + 100));
 		pointAddCloud->points.push_back(pt);
 	}
-	viewer->removePointCloud("pointAddCloud");
-	viewer->updatePointCloud(pointAddCloud, "pointAddCloud");
-	viewer->addPointCloud(pointAddCloud, "pointAddCloud");
-	this->color(pointAddCloud, 0, 0, 255);
-
+	this->cloudfiltered = pointAddCloud;
+	this->displaySelectedCloud(cloudfiltered, { 0,0,255 }, 4, "outliers");
 
 	//viewer->resetCamera();
 	//this->color(cloud, 250, 140, 20);
@@ -692,13 +721,8 @@ void QT_PCL_Segmentation::onDownSample() {
 		reader.read<pcl::PointXYZ>(file_name, *originCloud);
 	}
 	pcl::io::savePLYFileASCII(file_name.substr(0, file_name.length() - 4) + ".ply", *originCloud);
-
-	clearPointCloud();
-	viewer->removePointCloud("cloud");
-	viewer->updatePointCloud(originCloud, "cloud");
-	viewer->addPointCloud(originCloud, "cloud");
-	viewer->resetCamera();
-	this->color(originCloud, 250, 140, 20);
+	
+	this->displaySelectedCloud(originCloud, { 250, 140, 20 }, 1, "cloud");
 }
 
 void QT_PCL_Segmentation::downSample(std::string path) {
@@ -724,14 +748,12 @@ void QT_PCL_Segmentation::downSample(std::string path) {
 
 void QT_PCL_Segmentation::onUpdate() {
 	this->displaySampleCloud(this->sampleCloud);
-	/*ui.InfoText->append(
+	ui.InfoText->append(
 		"坐标: (" + 
 		QString::number(this->sampleCloud->points[0].x) + ", " + 
 		QString::number(this->sampleCloud->points[0].y) + ", " + 
-		QString::number(this->sampleCloud->points[0].z) + ")\n"+
-		"alhpa size:" + QString::number(this->xInfo[0].alpha.size()) +
-		"beta size:" + QString::number(this->xInfo[0].beta.size())
-	);*/
+		QString::number(this->sampleCloud->points[0].z) + ")\n"
+	);
 }
 
 

@@ -6,6 +6,7 @@
 * 灵感来源于MeshLab的RichParameterSet类
 * 目的是可以方便的进行全局化的参数修改，读取的功能
 *************************************************/
+#include <QtWidgets/QMainWindow>
 
 #include <map>
 #include <string>

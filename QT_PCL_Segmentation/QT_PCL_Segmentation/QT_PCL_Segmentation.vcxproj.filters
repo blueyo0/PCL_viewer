@@ -31,6 +31,9 @@
     <Filter Include="Header Files\Algorithm">
       <UniqueIdentifier>{ae03d220-0eed-452b-bbc0-e6323f4e30e8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Algorithm">
+      <UniqueIdentifier>{ad59b9e4-7368-4e88-be4c-4dad0703d97b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -45,16 +48,22 @@
     <ClCompile Include="GlobalFun.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MedialThread.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="TestMoving.cpp">
+      <Filter>Source Files\Algorithm</Filter>
     </ClCompile>
-    <ClCompile Include="PointCloudAlgorithm.cpp">
+    <ClCompile Include="AlgorithmThread.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="QT_PCL_Segmentation.h">
       <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="PointCloudAlgorithm.h">
+      <Filter>Header Files\Algorithm</Filter>
+    </QtMoc>
+    <QtMoc Include="TestMoving.h">
+      <Filter>Header Files\Algorithm</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -77,13 +86,10 @@
     <ClInclude Include="GlobalFun.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MedialThread.h">
+    <ClInclude Include="ParameterMgr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PointCloudAlgorithm.h">
-      <Filter>Header Files\Algorithm</Filter>
-    </ClInclude>
-    <ClInclude Include="ParameterMgr.h">
+    <ClInclude Include="AlgorithmThread.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -51,6 +51,7 @@ public:
     QDockWidget *sampleDock;
     QWidget *otherWidget_2;
     QPushButton *segButton_3;
+    QPushButton *segButton_4;
     QDockWidget *segDock;
     QWidget *segWidget;
     QLabel *label_13;
@@ -91,13 +92,13 @@ public:
     QPushButton *drawButton_6;
     QDockWidget *skelDock;
     QWidget *skelWidget;
-    QLabel *label_3;
     QPushButton *drawButton;
     QLabel *label_14;
     QTextEdit *K_2;
     QTextEdit *K_3;
     QLabel *label_15;
     QLabel *label_12;
+    QPushButton *drawButton_2;
     QDockWidget *visDock;
     QWidget *visWidget;
     QVTKWidget *qvtkWidget;
@@ -106,7 +107,7 @@ public:
     {
         if (QT_PCL_SegmentationClass->objectName().isEmpty())
             QT_PCL_SegmentationClass->setObjectName(QStringLiteral("QT_PCL_SegmentationClass"));
-        QT_PCL_SegmentationClass->resize(1334, 988);
+        QT_PCL_SegmentationClass->resize(1334, 991);
         QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
@@ -183,6 +184,10 @@ public:
         font.setFamily(QString::fromUtf8("\351\273\221\344\275\223"));
         font.setPointSize(12);
         segButton_3->setFont(font);
+        segButton_4 = new QPushButton(otherWidget_2);
+        segButton_4->setObjectName(QStringLiteral("segButton_4"));
+        segButton_4->setGeometry(QRect(110, 10, 91, 31));
+        segButton_4->setFont(font);
         sampleDock->setWidget(otherWidget_2);
         QT_PCL_SegmentationClass->addDockWidget(static_cast<Qt::DockWidgetArea>(2), sampleDock);
         segDock = new QDockWidget(QT_PCL_SegmentationClass);
@@ -361,12 +366,9 @@ public:
         skelWidget = new QWidget();
         skelWidget->setObjectName(QStringLiteral("skelWidget"));
         skelWidget->setStyleSheet(QStringLiteral(""));
-        label_3 = new QLabel(skelWidget);
-        label_3->setObjectName(QStringLiteral("label_3"));
-        label_3->setGeometry(QRect(10, 10, 141, 31));
         drawButton = new QPushButton(skelWidget);
         drawButton->setObjectName(QStringLiteral("drawButton"));
-        drawButton->setGeometry(QRect(200, 10, 91, 31));
+        drawButton->setGeometry(QRect(10, 10, 91, 31));
         drawButton->setFont(font);
         label_14 = new QLabel(skelWidget);
         label_14->setObjectName(QStringLiteral("label_14"));
@@ -389,6 +391,10 @@ public:
         label_12 = new QLabel(skelWidget);
         label_12->setObjectName(QStringLiteral("label_12"));
         label_12->setGeometry(QRect(10, 40, 281, 31));
+        drawButton_2 = new QPushButton(skelWidget);
+        drawButton_2->setObjectName(QStringLiteral("drawButton_2"));
+        drawButton_2->setGeometry(QRect(110, 10, 91, 31));
+        drawButton_2->setFont(font);
         skelDock->setWidget(skelWidget);
         QT_PCL_SegmentationClass->addDockWidget(static_cast<Qt::DockWidgetArea>(2), skelDock);
         visDock = new QDockWidget(QT_PCL_SegmentationClass);
@@ -449,10 +455,11 @@ public:
         menu->setTitle(QApplication::translate("QT_PCL_SegmentationClass", "\350\247\206\345\233\276", nullptr));
         sampleDock->setWindowTitle(QApplication::translate("QT_PCL_SegmentationClass", "\351\207\207\346\240\267", nullptr));
         segButton_3->setText(QApplication::translate("QT_PCL_SegmentationClass", "random", nullptr));
+        segButton_4->setText(QApplication::translate("QT_PCL_SegmentationClass", "wlop", nullptr));
         segDock->setWindowTitle(QApplication::translate("QT_PCL_SegmentationClass", "\345\210\206\345\235\227", nullptr));
         label_13->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt;\">c</span></p></body></html>", nullptr));
         label_5->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt;\">R</span></p></body></html>", nullptr));
-        segButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "over-seg", nullptr));
+        segButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "Kmeans", nullptr));
         Radius->setHtml(QApplication::translate("QT_PCL_SegmentationClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
@@ -523,7 +530,6 @@ public:
 "<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:'SimSun'; font-size:9pt;\">0.01</span></p></body></html>", nullptr));
         drawButton_6->setText(QApplication::translate("QT_PCL_SegmentationClass", "Bayes", nullptr));
         skelDock->setWindowTitle(QApplication::translate("QT_PCL_SegmentationClass", "L1\344\270\255\345\200\274", nullptr));
-        label_3->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">skeletonization</span></p></body></html>", nullptr));
         drawButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "L1-medial", nullptr));
         label_14->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt;\">h growth rate</span></p></body></html>", nullptr));
         K_2->setHtml(QApplication::translate("QT_PCL_SegmentationClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
@@ -538,6 +544,7 @@ public:
 "<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:'SimSun'; font-size:9pt;\">0.35</span></p></body></html>", nullptr));
         label_15->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt;\">repulsion u</span></p></body></html>", nullptr));
         label_12->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">L1-medial skeleton parameters</span></p></body></html>", nullptr));
+        drawButton_2->setText(QApplication::translate("QT_PCL_SegmentationClass", "moving", nullptr));
         visDock->setWindowTitle(QApplication::translate("QT_PCL_SegmentationClass", "\346\230\276\347\244\272", nullptr));
     } // retranslateUi
 
