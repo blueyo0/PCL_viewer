@@ -23,6 +23,9 @@ public:
 	Value(int in) { data.i = in; type = ParaType::intType; }
 	Value(float in) { data.f = in; type = ParaType::floatType; }
 	Value(double in) { data.d = in; type = ParaType::doubleType; }
+	int toInt() { return this->data.i; }
+	float toFloat() { return this->data.f; }
+	double toDouble() { return this->data.d; }
 
 public:
 	union { int i; float f; double d; } data;
@@ -47,6 +50,9 @@ public:
 	}
 	void add(string paraName, double paraVal) {
 		this->data[paraName] = Value(paraVal);
+	}
+	map<string, Value> getALLParameter() {
+		return this->data;
 	}
 	Value get(string paraName) { return this->data[paraName]; }
 	int getInt(string paraName) {
@@ -100,7 +106,9 @@ public:
 		return this->data[subSetName];
 		this->curSubSetName = subSetName;
 	}
-
+	map<string, ParameterSet> getALLSubSet() {
+		return this->data;
+	}
 public:
 	void setCurSubSet(string subSetName) {
 		this->curSubSetName = subSetName;

@@ -12,16 +12,6 @@ TestMoving::~TestMoving()
 {
 }
 
-void TestMoving::setParameterSet(ParameterSet para_ptr)
-{
-	this->para = para_ptr;
-}
-
-ParameterSet TestMoving::getParameterSet()
-{
-	return this->para;
-}
-
 void TestMoving::iterate()
 {
 	double length = this->para.getDouble("moving_length");

@@ -12,14 +12,12 @@ class TestMoving :
 public:
 	TestMoving(ParameterSet, PointCloud<PointXYZ>::Ptr);
 	virtual ~TestMoving();
-	virtual void setParameterSet(ParameterSet);
-	virtual ParameterSet getParameterSet();
+
 	virtual void iterate();
 	virtual void run();
 	virtual void reset();
 
 private:
-	ParameterSet para;
 	PointCloud<PointXYZ>::Ptr cloud;
 };
 

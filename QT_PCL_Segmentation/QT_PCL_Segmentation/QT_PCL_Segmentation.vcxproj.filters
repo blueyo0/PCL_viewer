@@ -42,17 +42,14 @@
     <ClCompile Include="QT_PCL_Segmentation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SamplePoint.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GlobalFun.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="TestMoving.cpp">
       <Filter>Source Files\Algorithm</Filter>
     </ClCompile>
     <ClCompile Include="AlgorithmThread.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="L1median.cpp">
+      <Filter>Source Files\Algorithm</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -80,9 +77,6 @@
     <ClInclude Include="PointInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SamplePoint.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="GlobalFun.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -90,6 +84,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AlgorithmThread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="L1median.h">
+      <Filter>Header Files\Algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalDef.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

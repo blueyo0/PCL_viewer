@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1334</width>
-    <height>991</height>
+    <height>987</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -44,26 +44,26 @@
      <string>文件</string>
     </property>
     <addaction name="actionopen"/>
+    <addaction name="actionopen_txt"/>
     <addaction name="actionnormalize"/>
     <addaction name="actionoff_ply"/>
     <addaction name="actionsave_NOFF"/>
     <addaction name="actiondown_sample"/>
     <addaction name="actionrandom_missing"/>
-    <addaction name="actionopen_txt"/>
    </widget>
-   <widget class="QMenu" name="menu">
+   <widget class="QMenu" name="menuVis">
     <property name="title">
      <string>视图</string>
     </property>
-    <addaction name="actionvis"/>
-    <addaction name="actionseg"/>
-    <addaction name="actioninfo"/>
-    <addaction name="actionskel"/>
-    <addaction name="actionother"/>
     <addaction name="actionsample"/>
+    <addaction name="actionseg"/>
+    <addaction name="actionother"/>
+    <addaction name="actioninfo"/>
+    <addaction name="actionL1"/>
+    <addaction name="actionBayes"/>
    </widget>
    <addaction name="menufile"/>
-   <addaction name="menu"/>
+   <addaction name="menuVis"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -127,6 +127,29 @@
      </property>
      <property name="text">
       <string>wlop</string>
+     </property>
+    </widget>
+    <widget class="QTextEdit" name="sampleNum">
+     <property name="geometry">
+      <rect>
+       <x>220</x>
+       <y>10</y>
+       <width>81</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>004方正古隶简体</family>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="html">
+      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'004方正古隶简体'; font-size:12pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'SimSun'; font-size:9pt;&quot;&gt;1000&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
    </widget>
@@ -1059,7 +1082,7 @@ p, li { white-space: pre-wrap; }
     <string>open txt</string>
    </property>
   </action>
-  <action name="actionvis">
+  <action name="actionL1">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -1067,7 +1090,7 @@ p, li { white-space: pre-wrap; }
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>显示</string>
+    <string>L1中值</string>
    </property>
   </action>
   <action name="actionseg">
@@ -1092,7 +1115,7 @@ p, li { white-space: pre-wrap; }
     <string>信息</string>
    </property>
   </action>
-  <action name="actionskel">
+  <action name="actionBayes">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -1100,7 +1123,7 @@ p, li { white-space: pre-wrap; }
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>骨架提取</string>
+    <string>贝叶斯</string>
    </property>
   </action>
   <action name="actionother">
