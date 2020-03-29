@@ -2,6 +2,8 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QTableWidget>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 
 #include <vtkAutoInit.h> 
 VTK_MODULE_INIT(vtkRenderingOpenGL)
@@ -25,6 +27,7 @@ VTK_MODULE_INIT(vtkInteractionStyle)
 
 #include "AlgorithmThread.h"
 #include "TestMoving.h"
+#include "L1median.h"
 #include "GlobalDef.h"
 #include "GlobalFun.h"
 
@@ -110,25 +113,38 @@ void QT_PCL_Segmentation::initialVtkWidget()
 //L1median
 void QT_PCL_Segmentation::onL1() 
 {
+	if (this->originCloud->points.size() < 1) { return; }
+	if (isAlgorithmRunning) { ui.InfoText->append("an algorithm is running!\n"); return; }
+	this->isAlgorithmRunning = true;
+	ParameterSet para = this->paraMgr->getSubSet(GlobalDef::L1median);
 
+	if (this->algorithm != NULL) delete this->algorithm;
+	if (this->sampleCloud->points.size() < 1) onRandomSample();
+	this->algorithm = new L1median(para, originCloud, sampleCloud);
+	// slot connecting
+	connectCommonSlots();
+
+	AlgorithmThread *at = new AlgorithmThread(this->algorithm);
+	//this->moveToThread(at);
+	at->start();
 }
 //TestMoving
 void QT_PCL_Segmentation::onMoving()
 {
+	if (this->originCloud->points.size() < 1) { return; }
+	if (isAlgorithmRunning) { ui.InfoText->append("an algorithm is running!\n"); return; }
+	this->isAlgorithmRunning = true;
 	ParameterSet para = this->paraMgr->getSubSet(GlobalDef::TestMoving);
 
 	if (this->algorithm != NULL) delete this->algorithm;
 	if (this->sampleCloud->points.size() < 1) onRandomSample();
 	this->algorithm = new TestMoving(para, this->sampleCloud);
-	if (!connect(this->algorithm, SIGNAL(iterateSignal()), this, SLOT(onUpdate())))
-	{
-		ui.InfoText->append("algorithm connect wrong!");
-	}
+	// slot connecting
+	connectCommonSlots();
 
 	AlgorithmThread *at = new AlgorithmThread(this->algorithm);
-	this->moveToThread(at);
+	//this->moveToThread(at);
 	at->start();
-
 }
 
 //一些简单的小功能
@@ -454,7 +470,7 @@ void QT_PCL_Segmentation::testPCLready()
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
 	// Fill in the cloud data
-	cloud->width = 15;
+	cloud->width = ui.testNum->toPlainText().toInt();
 	cloud->height = 1;
 	cloud->points.resize(cloud->width * cloud->height);
 
@@ -463,22 +479,24 @@ void QT_PCL_Segmentation::testPCLready()
 	// Generate the data
 	for (size_t i = 0; i < cloud->points.size(); ++i)
 	{
-		cloud->points[i].x = 10 * rand() / (RAND_MAX + 1.0f);
-		cloud->points[i].y = 10 * rand() / (RAND_MAX + 1.0f);
-		cloud->points[i].z = 1.0;
+		double radius = 0.4 + 0.1 * rand() / (RAND_MAX + 1.0f);
+		double theta = 2*3.1415926 * rand() / (RAND_MAX + 1.0f);
+
+		cloud->points[i].x = 0.5 + radius * cos(theta);
+		cloud->points[i].y = 0.5 + radius * sin(theta);
+		cloud->points[i].z = 0.0;
 		center.x += cloud->points[i].x;
 		center.y += cloud->points[i].y;
 		center.z += cloud->points[i].z;
 	}
-	center.z += 6;
 	center.x /= cloud->points.size();
 	center.y /= cloud->points.size();
 	center.z /= cloud->points.size();
 
-	// Set a few outliers
-	cloud->points[0].z = 3.0;
-	cloud->points[3].z = 1.0;
-	cloud->points[6].z = 2.0;
+
+	// 实际显示测试
+	this->originCloud = cloud; 
+	displayOriginCloud(originCloud);
 
 	QString text = "Point cloud data: " + QString::number(cloud->points.size()) + " points\n";
 	for (size_t i = 0; i < cloud->points.size(); ++i)
@@ -618,7 +636,7 @@ void QT_PCL_Segmentation::updateBarStatus()
 	vector<QAction*> actionList = {
 		ui.actionsample, ui.actionseg,
 		ui.actionother, ui.actioninfo,
-		ui.actionL1, ui.actionBayes 
+		ui.actionL1, ui.actionBayes
 	};
 
 	for (int i = 0; i < dockList.size(); ++i) {
@@ -639,15 +657,63 @@ void QT_PCL_Segmentation::initParaMgr()
 	}
 }
 
-void QT_PCL_Segmentation::updateParameterMgr()
+void QT_PCL_Segmentation::updateParameterMgr(QTableWidgetItem *item)
 {
-	// TO-DO
+	map<string, ParameterSet> para_data = this->paraMgr->getALLSubSet();
+	int rowNo = 0;
+	for (map<string, ParameterSet>::iterator iter = para_data.begin();
+		iter != para_data.end(); ++iter) {
+		map<string, Value> para_map = iter->second.getALLParameter();
+		paraMgr->setCurSubSet(paraTable->item(rowNo, 0)->text().toStdString());
+		rowNo++;
+		for (map<string, Value>::iterator para = para_map.begin();
+			para != para_map.end(); ++para) {
+			// 更新paraMgr中的值
+			QString input_val = paraTable->item(rowNo, 1)->text();
+			if (!GlobalFun::isDigitString(input_val)) {
+				ui.InfoText->append("error in parameter '" + 
+					paraTable->item(rowNo, 0)->text() + "'\n");
+
+				switch (para->second.type) {
+				case ParaType::intType:
+					paraTable->item(rowNo, 1)->setText(QString::number(para->second.data.i));
+					break;
+				case ParaType::floatType:
+					paraTable->item(rowNo, 1)->setText(QString::number(para->second.data.f));
+					break;
+				case ParaType::doubleType:
+					paraTable->item(rowNo, 1)->setText(QString::number(para->second.data.d));
+					break;
+				}
+				continue;
+			}
+			switch (para->second.type) {
+			case ParaType::intType:
+				this->paraMgr->add(paraTable->item(rowNo, 0)->text().toStdString(),
+					paraTable->item(rowNo, 1)->text().toInt());
+				break;
+			case ParaType::floatType:
+				this->paraMgr->add(paraTable->item(rowNo, 0)->text().toStdString(),
+					paraTable->item(rowNo, 1)->text().toFloat());
+				break;
+			case ParaType::doubleType:
+				this->paraMgr->add(paraTable->item(rowNo, 0)->text().toStdString(),
+					paraTable->item(rowNo, 1)->text().toDouble());
+				break;
+			}
+			rowNo++;
+		}
+	}
+	// ui.InfoText->append("para syn finished.\n");
 }
 
 void QT_PCL_Segmentation::initParaDockWithParaMgr(ParameterMgr* pm)
 {
-	ui.InfoText->append("Paramter DockWidget initialized!\n");
-	if (paraDock != NULL) delete paraDock;
+	//ui.InfoText->append("Paramter DockWidget initialized!\n");
+	if (paraDock != NULL) {
+		delete paraTable;
+		delete paraDock;
+	}
 	paraDock = new QDockWidget(tr("参数面板"), this);
 	QTableWidget *tw = new QTableWidget();
 	tw->setColumnCount(2);
@@ -665,6 +731,7 @@ void QT_PCL_Segmentation::initParaDockWithParaMgr(ParameterMgr* pm)
 		tw->insertRow(rowNo);
 		tw->setSpan(rowNo, 0, 1, 2);
 		tw->setItem(rowNo, 0, new QTableWidgetItem(QString::fromStdString(subset_name)));
+		tw->item(rowNo, 0)->setFlags(Qt::ItemIsDropEnabled);
 		rowNo++;
 
 		for (map<string, Value>::iterator para = para_map.begin();
@@ -691,9 +758,59 @@ void QT_PCL_Segmentation::initParaDockWithParaMgr(ParameterMgr* pm)
 			rowNo++;
 		}
 	}
+	//QVBoxLayout *layout = new QVBoxLayout(tw);
+	//tw->setLayout(layout);
 	paraDock->setWidget(tw);
-	paraDock->setFloating(true);
-	paraDock->resize(240, 300);
-	paraDock->show();
+	this->paraTable = tw;
+	//paraDock->setFloating(true);
+	paraDock->resize(tw->size());
+	//paraDock->show();
+	addDockWidget(Qt::LeftDockWidgetArea, paraDock);
+	this->tabifyDockWidget(paraDock, ui.visDock);
+	
+	if (!connect(paraTable, SIGNAL(itemChanged(QTableWidgetItem *)),
+				this, SLOT(updateParameterMgr(QTableWidgetItem *)))) {
+		ui.InfoText->append("connect paraTable failed!\n");
+	}
+
+}
+
+
+void QT_PCL_Segmentation::connectCommonSlots()
+{
+	if (this->algorithm) {
+		if (!connect(this->algorithm, SIGNAL(iterateSignal()), this, SLOT(onUpdate())))
+		{
+			ui.InfoText->append("algorithm connect wrong-code:1!");
+		}
+		if (!connect(this->algorithm, SIGNAL(infoSignal(const QString)),
+					 this, SLOT(displayAlgorithmInfo(const QString))))
+		{
+			ui.InfoText->append("algorithm connect wrong-code:2!");
+		}
+		if (!connect(this->algorithm, SIGNAL(errorSignal(const QString)),
+					 this, SLOT(displayAlgorithmError(const QString))))
+		{
+			ui.InfoText->append("algorithm connect wrong-code:3!");
+		}
+		if (!connect(this->algorithm, SIGNAL(endSignal()),
+					 this, SLOT(updateAlgorithmState())))
+		{
+			ui.InfoText->append("algorithm connect wrong-code:4!");
+		}
+	}
+}
+void QT_PCL_Segmentation::displayAlgorithmInfo(const QString name)
+{
+	ui.InfoText->append("[INFO] "+name+"\n");
+}
+void QT_PCL_Segmentation::displayAlgorithmError(const QString name)
+{
+	ui.InfoText->append("<ERROR> " + name + "\n");
+}
+
+void QT_PCL_Segmentation::updateAlgorithmState()
+{
+	this->isAlgorithmRunning = false;
 }
 

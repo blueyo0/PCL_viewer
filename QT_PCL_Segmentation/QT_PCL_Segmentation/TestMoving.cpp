@@ -32,6 +32,7 @@ void TestMoving::run()
 		iterate();
 		QThread::sleep(1);
 	}
+	emit endSignal();
 }
 
 void TestMoving::reset()

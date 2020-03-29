@@ -2,6 +2,8 @@
 
 #include <QtWidgets/QMainWindow>
 #include <QResizeEvent>
+#include <QTableWidget>
+#include <QTableWidgetItem>
 #include "ui_QT_PCL_Segmentation.h"
 
 #include <vector>
@@ -44,10 +46,12 @@ public:
 
 private:
 	Ui::QT_PCL_SegmentationClass ui;
+	QDockWidget *paraDock = NULL;
+	QTableWidget *paraTable = NULL;
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
 	ParameterMgr *paraMgr = NULL;
-	QDockWidget *paraDock = NULL;
 	PointCloudAlgorithm *algorithm = NULL;
+	bool isAlgorithmRunning = false;
 
 private:
 	PointCloud<PointXYZ>::Ptr originCloud;
@@ -59,7 +63,6 @@ private:
 	string cloudPath;
 	double skelScale;
 	pcl::PointXYZ midPoint;
-	int colorCloudIndex;
 
 public:
 	void initialVtkWidget();
@@ -69,7 +72,6 @@ public:
 	void saveNoff(string filename);
 	void downSample(string path);
 	/*UI相关*/
-	void displaySampleCloud(PointCloud<PointXYZ>::Ptr);
 	void displayOriginCloud(PointCloud<PointXYZ>::Ptr);
 	void displaySelectedCloud(const PointCloud<PointXYZ>::Ptr, const pi::RGB, double, string);
 	void initParaMgr();
@@ -104,8 +106,14 @@ private slots:
 	void onUpdate(); // 更新sampleCloud的显示
 	void clearPointCloud();
 	void resetPointCloud();
-	void updateParameterMgr(); // 更新paraMgr的内容与UI相符合
+	void updateParameterMgr(QTableWidgetItem *item); // 更新paraMgr的内容与UI相符合
 	void updateAllDockWidget(); // 更新dock的显示状态
 	void updateBarStatus();// 更新视图菜单的check状况
+	void updateAlgorithmState();
+
+	void connectCommonSlots();
+	void displaySampleCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr);
+	void displayAlgorithmInfo(const QString name);
+	void displayAlgorithmError(const QString name);
 
 };

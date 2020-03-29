@@ -42,6 +42,7 @@ public:
     QAction *actionBayes;
     QAction *actionother;
     QAction *actionsample;
+    QAction *actionpara;
     QWidget *centralWidget;
     QMenuBar *menuBar;
     QMenu *menufile;
@@ -88,17 +89,11 @@ public:
     QPushButton *clearButton;
     QDockWidget *skelDock2;
     QWidget *skelWidget_2;
-    QLabel *label_19;
-    QTextEdit *skelSizeValue;
     QPushButton *drawButton_6;
     QDockWidget *skelDock;
     QWidget *skelWidget;
     QPushButton *drawButton;
-    QLabel *label_14;
-    QTextEdit *K_2;
-    QTextEdit *K_3;
-    QLabel *label_15;
-    QLabel *label_12;
+    QTextEdit *testNum;
     QPushButton *drawButton_2;
     QDockWidget *visDock;
     QWidget *visWidget;
@@ -108,7 +103,7 @@ public:
     {
         if (QT_PCL_SegmentationClass->objectName().isEmpty())
             QT_PCL_SegmentationClass->setObjectName(QStringLiteral("QT_PCL_SegmentationClass"));
-        QT_PCL_SegmentationClass->resize(1334, 987);
+        QT_PCL_SegmentationClass->resize(1334, 991);
         QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
@@ -153,6 +148,10 @@ public:
         actionsample->setObjectName(QStringLiteral("actionsample"));
         actionsample->setCheckable(true);
         actionsample->setChecked(true);
+        actionpara = new QAction(QT_PCL_SegmentationClass);
+        actionpara->setObjectName(QStringLiteral("actionpara"));
+        actionpara->setCheckable(true);
+        actionpara->setChecked(true);
         centralWidget = new QWidget(QT_PCL_SegmentationClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         centralWidget->setEnabled(false);
@@ -350,13 +349,6 @@ public:
         skelWidget_2 = new QWidget();
         skelWidget_2->setObjectName(QStringLiteral("skelWidget_2"));
         skelWidget_2->setStyleSheet(QStringLiteral(""));
-        label_19 = new QLabel(skelWidget_2);
-        label_19->setObjectName(QStringLiteral("label_19"));
-        label_19->setGeometry(QRect(10, 10, 31, 31));
-        skelSizeValue = new QTextEdit(skelWidget_2);
-        skelSizeValue->setObjectName(QStringLiteral("skelSizeValue"));
-        skelSizeValue->setGeometry(QRect(40, 10, 61, 31));
-        skelSizeValue->setFont(font1);
         drawButton_6 = new QPushButton(skelWidget_2);
         drawButton_6->setObjectName(QStringLiteral("drawButton_6"));
         drawButton_6->setGeometry(QRect(200, 10, 91, 31));
@@ -375,27 +367,10 @@ public:
         drawButton->setObjectName(QStringLiteral("drawButton"));
         drawButton->setGeometry(QRect(10, 10, 91, 31));
         drawButton->setFont(font);
-        label_14 = new QLabel(skelWidget);
-        label_14->setObjectName(QStringLiteral("label_14"));
-        label_14->setGeometry(QRect(10, 70, 81, 31));
-        label_14->setFont(font2);
-        label_14->setContextMenuPolicy(Qt::DefaultContextMenu);
-        K_2 = new QTextEdit(skelWidget);
-        K_2->setObjectName(QStringLiteral("K_2"));
-        K_2->setGeometry(QRect(100, 70, 51, 31));
-        K_2->setFont(font1);
-        K_3 = new QTextEdit(skelWidget);
-        K_3->setObjectName(QStringLiteral("K_3"));
-        K_3->setGeometry(QRect(240, 70, 51, 31));
-        K_3->setFont(font1);
-        label_15 = new QLabel(skelWidget);
-        label_15->setObjectName(QStringLiteral("label_15"));
-        label_15->setGeometry(QRect(160, 70, 71, 31));
-        label_15->setFont(font2);
-        label_15->setContextMenuPolicy(Qt::DefaultContextMenu);
-        label_12 = new QLabel(skelWidget);
-        label_12->setObjectName(QStringLiteral("label_12"));
-        label_12->setGeometry(QRect(10, 40, 281, 31));
+        testNum = new QTextEdit(skelWidget);
+        testNum->setObjectName(QStringLiteral("testNum"));
+        testNum->setGeometry(QRect(240, 10, 51, 31));
+        testNum->setFont(font1);
         drawButton_2 = new QPushButton(skelWidget);
         drawButton_2->setObjectName(QStringLiteral("drawButton_2"));
         drawButton_2->setGeometry(QRect(110, 10, 91, 31));
@@ -456,6 +431,7 @@ public:
         actionBayes->setText(QApplication::translate("QT_PCL_SegmentationClass", "\350\264\235\345\217\266\346\226\257", nullptr));
         actionother->setText(QApplication::translate("QT_PCL_SegmentationClass", "\345\205\266\345\256\203", nullptr));
         actionsample->setText(QApplication::translate("QT_PCL_SegmentationClass", "\351\207\207\346\240\267", nullptr));
+        actionpara->setText(QApplication::translate("QT_PCL_SegmentationClass", "\345\217\202\346\225\260", nullptr));
         menufile->setTitle(QApplication::translate("QT_PCL_SegmentationClass", "\346\226\207\344\273\266", nullptr));
         menuVis->setTitle(QApplication::translate("QT_PCL_SegmentationClass", "\350\247\206\345\233\276", nullptr));
         sampleDock->setWindowTitle(QApplication::translate("QT_PCL_SegmentationClass", "\351\207\207\346\240\267", nullptr));
@@ -465,7 +441,7 @@ public:
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:'004\346\226\271\346\255\243\345\217\244\351\232\266\347\256\200\344\275\223'; font-size:12pt; font-weight:400; font-style:normal;\">\n"
-"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:'SimSun'; font-size:9pt;\">1000</span></p></body></html>", nullptr));
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:'SimSun'; font-size:9pt;\">100</span></p></body></html>", nullptr));
         segDock->setWindowTitle(QApplication::translate("QT_PCL_SegmentationClass", "\345\210\206\345\235\227", nullptr));
         label_13->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt;\">c</span></p></body></html>", nullptr));
         label_5->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt;\">R</span></p></body></html>", nullptr));
@@ -532,28 +508,14 @@ public:
         showButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "test", nullptr));
         clearButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "clear", nullptr));
         skelDock2->setWindowTitle(QApplication::translate("QT_PCL_SegmentationClass", "\350\264\235\345\217\266\346\226\257", nullptr));
-        label_19->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p>size</p></body></html>", nullptr));
-        skelSizeValue->setHtml(QApplication::translate("QT_PCL_SegmentationClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:'004\346\226\271\346\255\243\345\217\244\351\232\266\347\256\200\344\275\223'; font-size:12pt; font-weight:400; font-style:normal;\">\n"
-"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:'SimSun'; font-size:9pt;\">0.01</span></p></body></html>", nullptr));
         drawButton_6->setText(QApplication::translate("QT_PCL_SegmentationClass", "Bayes", nullptr));
         skelDock->setWindowTitle(QApplication::translate("QT_PCL_SegmentationClass", "L1\344\270\255\345\200\274", nullptr));
         drawButton->setText(QApplication::translate("QT_PCL_SegmentationClass", "L1-medial", nullptr));
-        label_14->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt;\">h growth rate</span></p></body></html>", nullptr));
-        K_2->setHtml(QApplication::translate("QT_PCL_SegmentationClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+        testNum->setHtml(QApplication::translate("QT_PCL_SegmentationClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:'004\346\226\271\346\255\243\345\217\244\351\232\266\347\256\200\344\275\223'; font-size:12pt; font-weight:400; font-style:normal;\">\n"
-"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:'SimSun'; font-size:9pt;\">0.5</span></p></body></html>", nullptr));
-        K_3->setHtml(QApplication::translate("QT_PCL_SegmentationClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:'004\346\226\271\346\255\243\345\217\244\351\232\266\347\256\200\344\275\223'; font-size:12pt; font-weight:400; font-style:normal;\">\n"
-"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:'SimSun'; font-size:9pt;\">0.35</span></p></body></html>", nullptr));
-        label_15->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt;\">repulsion u</span></p></body></html>", nullptr));
-        label_12->setText(QApplication::translate("QT_PCL_SegmentationClass", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">L1-medial skeleton parameters</span></p></body></html>", nullptr));
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:'SimSun'; font-size:9pt;\">1000</span></p></body></html>", nullptr));
         drawButton_2->setText(QApplication::translate("QT_PCL_SegmentationClass", "moving", nullptr));
         visDock->setWindowTitle(QApplication::translate("QT_PCL_SegmentationClass", "\346\230\276\347\244\272", nullptr));
     } // retranslateUi

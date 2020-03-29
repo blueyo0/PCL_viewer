@@ -3,13 +3,18 @@
 #include "ParameterMgr.h"
 #include <QObject>
 #include <QString>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 
 class PointCloudAlgorithm : public QObject
 {
 	Q_OBJECT
 signals:
 	void iterateSignal();
-	void errorSignal(const QString &name);
+	void endSignal();
+	void sampleChangeSignal(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
+	void errorSignal(const QString name);
+	void infoSignal(const QString name);
 
 protected:
 	ParameterSet para;

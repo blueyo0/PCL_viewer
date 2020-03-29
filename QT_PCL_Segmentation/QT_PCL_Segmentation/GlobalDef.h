@@ -17,6 +17,13 @@ namespace GlobalDef {
 	};
 
 	vector<pair<string, Value>> PARA_L1median = {
+		make_pair("neighborhood_size",	1.0),
+		make_pair("h_increasing_rate",	0.5),
+		make_pair("average_power",		2),
+		make_pair("repulsion_power",	2),
+		make_pair("use_desity_weight", int(false)),
+		make_pair("max_iterate_time", 50),
+		make_pair("moving_error_threshold", 0.0005)
 	};
 
 

@@ -2,6 +2,8 @@
 #include <vector>
 #include <algorithm>
 
+#include <QString>
+
 #include <pcl/point_types.h>
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
@@ -122,6 +124,7 @@ namespace GlobalFun {
 	{
 		PointCloud<PointXYZ>::Ptr sampleCloud(new PointCloud<PointXYZ>);
 		int size = inCloud->points.size();
+		if (num >= size) return inCloud;
 		vector<int> nCard(size, 0);
 		for (int i = 0; i < size; ++i) {
 			nCard[i] = i;
@@ -173,6 +176,23 @@ namespace GlobalFun {
 		center.z /= inCloud->points.size();
 		return center;
 	}
+	bool isDigitString(const QString& src) {
+		const string s = src.toStdString();
+		for (char c : s) {
+			if (!isdigit(c) && c!='.') {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/*vector<int> BHG(PointCloud<PointXYZ>::Ptr inCloud) {
+		vector<int> res;
+		return res;
+	}*/
+	//vector<PointCloud<PointXYZ>::Ptr> getSegClouds(PointCloud<PointXYZ>::Ptr, vector<int>);
+	//double disBetweenSkelAndPt(Skeleton, PointXYZ);
+
 }
 
 
