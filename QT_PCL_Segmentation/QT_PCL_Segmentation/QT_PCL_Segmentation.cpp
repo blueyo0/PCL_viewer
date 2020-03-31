@@ -22,8 +22,6 @@ VTK_MODULE_INIT(vtkInteractionStyle)
 #include <math.h>
 #include <utility>
 
-#include <Eigen/Dense>
-#include <Eigen/Eigenvalues>
 
 #include "AlgorithmThread.h"
 #include "TestMoving.h"
@@ -34,7 +32,6 @@ VTK_MODULE_INIT(vtkInteractionStyle)
 
 using namespace std;
 using namespace pcl;
-using namespace Eigen;
 
 
 
@@ -120,7 +117,7 @@ void QT_PCL_Segmentation::onL1()
 
 	if (this->algorithm != NULL) delete this->algorithm;
 	if (this->sampleCloud->points.size() < 1) onRandomSample();
-	this->algorithm = new L1median(para, originCloud, sampleCloud);
+	this->algorithm = new L1median(para, originCloud, sampleCloud, skeleton);
 	// slot connecting
 	connectCommonSlots();
 
@@ -138,7 +135,7 @@ void QT_PCL_Segmentation::onMoving()
 
 	if (this->algorithm != NULL) delete this->algorithm;
 	if (this->sampleCloud->points.size() < 1) onRandomSample();
-	this->algorithm = new TestMoving(para, this->sampleCloud);
+	this->algorithm = new TestMoving(para, this->sampleCloud, this->skeleton);
 	// slot connecting
 	connectCommonSlots();
 
@@ -498,7 +495,7 @@ void QT_PCL_Segmentation::testPCLready()
 	this->originCloud = cloud; 
 	displayOriginCloud(originCloud);
 
-	QString text = "Point cloud data: " + QString::number(cloud->points.size()) + " points\n";
+	/*QString text = "Point cloud data: " + QString::number(cloud->points.size()) + " points\n";
 	for (size_t i = 0; i < cloud->points.size(); ++i)
 		text += "       " + QString::number(cloud->points[i].x, 'f', 2) + "  "
 		+ QString::number(cloud->points[i].y, 'f', 2) + "  "
@@ -508,7 +505,8 @@ void QT_PCL_Segmentation::testPCLready()
 		+ QString::number(center.y, 'f', 2) + "  "
 		+ QString::number(center.z, 'f', 2) + "  \n";
 
-	ui.InfoText->setText(text);
+	ui.InfoText->setText(text);*/
+	this->resetPointCloud();
 }
 
 void QT_PCL_Segmentation::testColorAmongAxis()
@@ -569,12 +567,14 @@ void QT_PCL_Segmentation::displayOriginCloud(PointCloud<PointXYZ>::Ptr cloud)
 }
 
 void QT_PCL_Segmentation::displaySampleCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud) {
+	ParameterSet common = paraMgr->getSubSet(GlobalDef::Common);
 	viewer->removePointCloud("sample_cloud");
 	viewer->addPointCloud(inCloud, "sample_cloud");
-	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 8, "sample_cloud");
+	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 
+											 common.getInt("sample_point_size"), "sample_cloud");
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1, 0, 0, "sample_cloud");
 	viewer->removeShape("sp0");
-	viewer->addSphere(inCloud->points[0], 0.0000006*originCloud->width, 0, 135, 0, "sp0");
+	viewer->addSphere(inCloud->points[0], common.getInt("skeleton_point_size"), 0, 135, 0, "sp0");
 
 	ui.qvtkWidget->update();
 }
@@ -602,9 +602,9 @@ void QT_PCL_Segmentation::onUpdate() {
 	this->displaySampleCloud(this->sampleCloud);
 	ui.InfoText->append(
 		"坐标: (" + 
-		QString::number(this->sampleCloud->points[0].x) + ", " + 
-		QString::number(this->sampleCloud->points[0].y) + ", " + 
-		QString::number(this->sampleCloud->points[0].z) + ")\n"
+		QString::number(this->sampleCloud->points[0].x, 'f', 2) + ", " +
+		QString::number(this->sampleCloud->points[0].y, 'f', 2) + ", " +
+		QString::number(this->sampleCloud->points[0].z, 'f', 2) + ")"
 	);
 }
 
@@ -798,6 +798,11 @@ void QT_PCL_Segmentation::connectCommonSlots()
 		{
 			ui.InfoText->append("algorithm connect wrong-code:4!");
 		}
+		if (!connect(this->algorithm, SIGNAL(skelChangeSignal()),
+					 this, SLOT(displaySkeleton())))
+		{
+			ui.InfoText->append("algorithm connect wrong-code:5!");
+		}
 	}
 }
 void QT_PCL_Segmentation::displayAlgorithmInfo(const QString name)
@@ -812,5 +817,50 @@ void QT_PCL_Segmentation::displayAlgorithmError(const QString name)
 void QT_PCL_Segmentation::updateAlgorithmState()
 {
 	this->isAlgorithmRunning = false;
+	ui.InfoText->append("finish algorithm running!");
+}
+
+
+void QT_PCL_Segmentation::displaySkeleton()
+{
+	ParameterSet common = paraMgr->getSubSet(GlobalDef::Common);
+	double pt_size = common.getDouble("skeleton_point_size");
+	double br_size = common.getDouble("skeleton_branch_size");
+
+	int b_id = 0;
+	for (vector<PointXYZ> branch : *skeleton) {
+		int size = branch.size();
+		if (size < 2) continue;
+
+		int p_id = 0;
+		for (PointXYZ pt : branch) {
+			// draw skel points
+			string pt_name = "point_b" + to_string(b_id) + "_p" + to_string(p_id);
+			viewer->removeShape(pt_name);
+			pi::RGB color = { 0, 135, 0 };
+			if (p_id == 0 || p_id == size - 1) color = { 0,0,135 };
+			viewer->addSphere(pt, pt_size, color.r, color.g, color.b, pt_name);
+
+			// draw skel branch
+			if (p_id < size-1) {
+				PointXYZ nextPt = branch[p_id + 1];
+				string br_name = "branch_b" + to_string(b_id) + "_p" + to_string(p_id);
+				viewer->removeShape(br_name);
+				pcl::ModelCoefficients cylinder_coeff;
+				cylinder_coeff.values.resize(7);
+				cylinder_coeff.values[0] = pt.x;
+				cylinder_coeff.values[1] = pt.y;
+				cylinder_coeff.values[2] = pt.z;
+				cylinder_coeff.values[3] = nextPt.x - pt.x;
+				cylinder_coeff.values[4] = nextPt.y - pt.y;
+				cylinder_coeff.values[5] = nextPt.z - pt.z;
+				cylinder_coeff.values[6] = br_size;
+				viewer->addCylinder(cylinder_coeff, br_name);
+			}
+			p_id++;
+		}
+		b_id++;
+	}
+	ui.qvtkWidget->update();
 }
 

@@ -42,8 +42,7 @@ namespace GlobalFun {
 
 	void off_obj(std::string input)
 	{
-		/*函数说明：读取off文件
-			* */
+		/*函数说明：读取off文件*/
 		float vertex[10000][3];
 		int surface[10000][3];
 		char k;
@@ -185,6 +184,8 @@ namespace GlobalFun {
 		}
 		return true;
 	}
+
+
 
 	/*vector<int> BHG(PointCloud<PointXYZ>::Ptr inCloud) {
 		vector<int> res;

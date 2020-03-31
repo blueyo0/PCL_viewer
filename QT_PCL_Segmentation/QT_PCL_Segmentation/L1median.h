@@ -40,27 +40,38 @@ class L1median :
 private:
 	PointCloud<PointXYZ>::Ptr sample;
 	PointCloud<PointXYZ> sample_save;
-	PointCloud<PointXYZ>::Ptr origin;
 	vector<L1SampleInfo> sampleInfo;
-	double h = -1.0, h_increment=0;
+	PointCloud<PointXYZ>::Ptr origin;
+	vector<vector<PointXYZ>> *skelPtr;
+	vector<double> density;
+	double h = -1.0, h_increment = 0, guassin_factor=0;
+	double h_boundary = 1;
+	double rep_factor = 0;
 	int avg_power=2, rep_power=2;
 	bool isDensityWeighted = false;
 
 public:
 	void initalizeParam();
+	bool isSampleFixed(int);
+
 	void computeNeighbors();
 	void computeSigmas();
 	void computeAlphasTerms();
 	void computeBetasTerms();
 
-	void updateSamplePos();
+	//density weight
+	void computeDensity();
+
+	double updateSamplePos(); 
+	bool updateRemovedSample();
 	void growAllBranches();
 	double updateRadius();
 	bool synSampleWithInfo();
 
 public:
 	L1median(ParameterSet, PointCloud<PointXYZ>::Ptr, 
-						   PointCloud<PointXYZ>::Ptr); // para + origin + sample
+						   PointCloud<PointXYZ>::Ptr,
+						   vector<vector<PointXYZ>>*); // para + origin + sample
 	virtual ~L1median();
 
 	virtual void run();

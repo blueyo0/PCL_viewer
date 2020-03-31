@@ -13,7 +13,6 @@
 
 #include "PointInfo.h"
 #include "ParameterMgr.h"
-
 #include "PointCloudAlgorithm.h"
 
 #include <pcl/common/projection_matrix.h>
@@ -49,9 +48,12 @@ private:
 	QDockWidget *paraDock = NULL;
 	QTableWidget *paraTable = NULL;
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
+
+private:
 	ParameterMgr *paraMgr = NULL;
 	PointCloudAlgorithm *algorithm = NULL;
 	bool isAlgorithmRunning = false;
+	vector<vector<PointXYZ>>* skeleton = new vector<vector<PointXYZ>>({});
 
 private:
 	PointCloud<PointXYZ>::Ptr originCloud;
@@ -110,6 +112,7 @@ private slots:
 	void updateAllDockWidget(); // 更新dock的显示状态
 	void updateBarStatus();// 更新视图菜单的check状况
 	void updateAlgorithmState();
+	void displaySkeleton();
 
 	void connectCommonSlots();
 	void displaySampleCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr);

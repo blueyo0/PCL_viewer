@@ -12,9 +12,10 @@ class PointCloudAlgorithm : public QObject
 signals:
 	void iterateSignal();
 	void endSignal();
-	void sampleChangeSignal(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
+	void skelChangeSignal();
 	void errorSignal(const QString name);
 	void infoSignal(const QString name);
+
 
 protected:
 	ParameterSet para;
