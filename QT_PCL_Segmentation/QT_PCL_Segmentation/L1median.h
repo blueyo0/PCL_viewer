@@ -57,6 +57,9 @@ private:
 	int avg_power=2, rep_power=2;
 	bool isDensityWeighted = false;
 
+	//º”ÀŸ
+	int radius_increase_time = 1;
+
 public:
 	void initalizeParam();
 	bool isSampleFixed(int);

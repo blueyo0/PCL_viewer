@@ -1,4 +1,5 @@
 #include "L1median.h"
+#include "omp.h"
 #include <QThread>
 #include <pcl/common/common.h>
 #include <pcl/filters/voxel_grid.h>
@@ -8,6 +9,8 @@
 #include <Eigen/Eigenvalues>
 
 #include <ctime>
+#include <queue>
+#include <thread>
 
 using namespace Eigen;
 
@@ -37,27 +40,45 @@ void L1median::run()
 	this->skelPtr->clear();
 	if (bool(para.getInt("use_down_sample"))) preDownSample();
 	/*预备信息计算*/
-	emit infoSignal(">> computing density...");
 	computeNeighbors();
 	computeSigmas();
-	if (isDensityWeighted) computeDensity();
-	emit infoSignal(">> finish computing");
+	if (isDensityWeighted) {
+		emit infoSignal(">> computing density...");
+		computeDensity();
+		emit infoSignal(">> finish computing");
+	}
 	int N = this->para.getInt("max_iterate_time");
 	double err_threshold = this->para.getDouble("moving_error_threshold");
 	double err_factor = this->para.getDouble("moving_error_factor");
 
+	int total_iterate_count = 0;
 	for (int i = 0; i < N; ++i) {
 		if (resetFlag) {
 			for (int s = 0; s < sample->points.size(); ++s) {
 				sample->points[s] = sample_save.points[s];
 			}
-			paraPtr->add("neighborhood_size", 0);
+			paraPtr->add("neighborhood_size", 0.00);
 			resetFlag = false;
 			emit iterateSignal();
 			return;
 		}
+		total_iterate_count++;
+		emit infoSignal("iterate time: "+QString::number(total_iterate_count));
 		double error = iterateReturnError();
-		if (bool(para.getInt("use_error_measurement")) && i == 5) {
+
+		// for couple.ply test
+		int si_index = 0;
+		int min_si_index = 0;
+		double min_si_z = 1.0;
+		for (L1SampleInfo si : sampleInfo) {
+			if (si.pos.z < min_si_z) {
+				min_si_z = si.pos.z;
+				min_si_index = si_index;
+			}
+			si_index++;
+		}
+
+		if (bool(para.getInt("use_auto_error")) && i == 5) {
 			err_threshold = error * err_factor;
 			paraPtr->add("moving_error_threshold", err_threshold);
 			continue;
@@ -97,7 +118,11 @@ double L1median::iterateReturnError()
 		emit errorSignal(QString("fail to synchronize sample info"));
 		return 0.0;
 	}
-	/*删除重合点*/
+	/*位置更新后的预备信息计算*/
+	computeNeighbors();
+	computeSigmas();
+
+	/*remove重合点*/
 	/*if (updateRemovedSample()) {
 		emit iterateSignal();
 	}
@@ -105,9 +130,6 @@ double L1median::iterateReturnError()
 		emit errorSignal(QString("fail to remove samples"));
 		return 0.0;
 	}*/
-	/*位置更新后的预备信息计算*/
-	computeNeighbors();
-	computeSigmas();
 
 	/*tracing搜寻骨骼*/
 	//growAllBranches();
@@ -170,15 +192,20 @@ void L1median::computeOriginNeighbors()
 	clock_t start = clock();
 	// origin neighbors
 	int index = 0;
-	for (L1SampleInfo xsi : sampleInfo) {
+	// 使用omp方式进行多线程计算
+
+	omp_set_num_threads(para.getInt("density_thread_num"));
+#pragma omp parallel for
+	for (int index = 0; index < sampleInfo.size(); ++index) {
 		if (isSampleFixed(index)) {
 			sampleInfo[index].o_indics.clear();
 			sampleInfo[index].o_dists.clear();
 			continue;
 		}
+		L1SampleInfo xsi = sampleInfo[index];
 		PointXYZ xpt = xsi.pos;
-		vector<int> neighIndex;
-		vector<float> neighDistance;
+		vector<int> neighIndex(1000);
+		vector<float> neighDistance(1000);
 		int num = originKdtree.radiusSearch(xpt, this->h, neighIndex, neighDistance);
 
 		while (neighDistance.size() > 0 && neighDistance[0] == 0) {
@@ -186,6 +213,36 @@ void L1median::computeOriginNeighbors()
 			neighIndex.erase(neighIndex.begin());
 		}
 
+		// TO-DO: 通过裁剪半径的kdtree搜索加速 （此方案暂时弃用）
+		// URL: https://blog.csdn.net/qq_34719188/article/details/102565436
+		/*double cutted_h = this->h / radius_increase_time;
+		queue<PointXYZ> cachePointQueue;
+		cachePointQueue.push(xpt);
+		int iterate_limit = 1;
+		int iterate_time = 0;
+		int total_iterate_time = 0;
+		while (!cachePointQueue.empty()) {
+			PointXYZ search_pt = cachePointQueue.front();
+			cachePointQueue.pop();
+			originKdtree.radiusSearch(search_pt, cutted_h, neighIndex, neighDistance);
+			while (neighDistance.size() > 0 && neighDistance[0] == 0) {
+				neighDistance.erase(neighDistance.begin());
+				neighIndex.erase(neighIndex.begin());
+			}
+			for (int n_i : neighIndex) {
+				cachePointQueue.push(origin->points[n_i]);
+			}
+			iterate_time++;
+			if (iterate_time == iterate_limit) {
+				iterate_limit = cachePointQueue.size();
+				iterate_time = 0;
+				total_iterate_time++;
+			}
+			if (total_iterate_time > radius_increase_time) {
+				break;
+			}
+		}*/
+					
 		/*for (int i = 0; i < neighDistance.size(); ++i) {
 			//if (neighDistance[i]<1e-8 || neighDistance[i]>1e8) {
 			//	neighIndex.erase(neighIndex.begin() + i);
@@ -196,11 +253,13 @@ void L1median::computeOriginNeighbors()
 
 		sampleInfo[index].o_indics = neighIndex;
 		sampleInfo[index].o_dists = neighDistance;
-		index++;
 	}
 	clock_t end = clock();
-	emit infoSignal("o_neigh time cost:" +
-		QString::number((double)(end - start) / CLOCKS_PER_SEC, 'f', 2) + 's');
+
+	if (para.getInt("use_timecost_output")) {
+		emit infoSignal("o_neigh time cost:" +
+			QString::number((double)(end - start) / CLOCKS_PER_SEC, 'f', 2) + 's');
+	}
 }
 void L1median::computeSelfNeighbors()
 {
@@ -216,22 +275,24 @@ void L1median::computeSelfNeighbors()
 			index++;
 			continue;
 		}
-		vector<int> neighIndex;
-		vector<float> neighDistance;
+		vector<int> neighIndex(1000);
+		vector<float> neighDistance(1000);
 		int num = selfKdtree.radiusSearch(index, this->h, neighIndex, neighDistance);
 
 		while (neighDistance.size() > 0 && neighDistance[0] == 0) {
 			neighIndex.erase(neighIndex.begin());
 			neighDistance.erase(neighDistance.begin());
 		}
-		for (int i = 0; i < neighDistance.size(); ++i) {
-			if (neighDistance[i] < combine_threshold || isSampleFixed(neighIndex[i])) {
-				// 会导致原因不明的发散问题，暂时弃用此Remove机制
-				//sampleInfo[neighIndex[i]].kind = (sampleInfo[neighIndex[i]].kind == pi::Sample)? 
-				//								  pi::Removed : sampleInfo[neighIndex[i]].kind;
-				neighIndex.erase(neighIndex.begin() + i);
-				neighDistance.erase(neighDistance.begin() + i);
-				i--;
+		if (para.getInt("use_close_neigh_removement")) {
+			for (int i = 0; i < neighDistance.size(); ++i) {
+				if (neighDistance[i] < combine_threshold || isSampleFixed(neighIndex[i])) {
+					// 会导致原因不明的发散问题，暂时弃用此Remove机制
+					//sampleInfo[neighIndex[i]].kind = (sampleInfo[neighIndex[i]].kind == pi::Sample)? 
+					//								  pi::Removed : sampleInfo[neighIndex[i]].kind;
+					neighIndex.erase(neighIndex.begin() + i);
+					neighDistance.erase(neighDistance.begin() + i);
+					i--;
+				}
 			}
 		}
 		sampleInfo[index].s_indics = neighIndex;
@@ -239,8 +300,10 @@ void L1median::computeSelfNeighbors()
 		index++;
 	}
 	clock_t end = clock();
-	emit infoSignal("s_neigh time cost:" +
-		QString::number((double)(end - start) / CLOCKS_PER_SEC, 'f', 2) + 's');
+	if (para.getInt("use_timecost_output")) {
+		emit infoSignal("s_neigh time cost:" +
+			QString::number((double)(end - start) / CLOCKS_PER_SEC, 'f', 2) + 's');
+	}
 }
 
 void L1median::computeNeighbors()
@@ -292,8 +355,10 @@ void L1median::computeSigmas()
 		}
 	}
 	clock_t end = clock();
-	emit infoSignal("sigma time cost:" +
-		QString::number((double)(end - start) / CLOCKS_PER_SEC, 'f', 2) + 's');
+	if (para.getInt("use_timecost_output")) {
+		emit infoSignal("sigma time cost:" +
+			QString::number((double)(end - start) / CLOCKS_PER_SEC, 'f', 2) + 's');
+	}
 }
 
 double L1median::updateRadius()
@@ -301,6 +366,7 @@ double L1median::updateRadius()
 	h += h_increment;
 	h_increment = this->para.getDouble("h_increasing_rate")*h;
 	emit infoSignal("<font color=\"#049f11\">update radius to "+QString::number(h, 'f', 2)+"</font>");
+	radius_increase_time++;
 	return h;
 }
 
@@ -329,18 +395,24 @@ bool L1median::synSampleWithInfo()
 
 bool L1median::updateRemovedSample()
 {
+	double combine_threshold = para.getDouble("too_close_dist_threshold");
+	combine_threshold = combine_threshold * combine_threshold;
 	if (this->sample->points.size() != this->sampleInfo.size()) {
 		return false;
 	}
-	vector<L1SampleInfo> old_sampleInfo = sampleInfo;
-	int i = 0;
-	for (L1SampleInfo si : old_sampleInfo) {
-		if (si.kind == pi::Removed) {
-			sampleInfo.erase(sampleInfo.begin() + i);
-			sample->points.erase(sample->points.begin() + i);
-			continue;
+	for (int i = 0; i < sampleInfo.size(); ++i) {
+		if (isSampleFixed(i)) continue;
+		for (int j = 0; j < sampleInfo[i].s_indics.size(); ++j){
+			if (isSampleFixed(sampleInfo[i].s_indics[j])) {
+				sampleInfo[i].s_indics.erase(sampleInfo[i].s_indics.begin() + j);
+				sampleInfo[i].s_dists.erase(sampleInfo[i].s_dists.begin() + j);
+				j--;
+				continue;
+			}
+			if (sampleInfo[i].s_dists[j] < combine_threshold) {
+				sampleInfo[sampleInfo[i].s_indics[j]].kind = pi::Removed;
+			}
 		}
-		i++;
 	}
 
 	return true;
@@ -391,8 +463,11 @@ void L1median::computeAlphasTerms()
 		}
 	}
 	clock_t end = clock();
-	emit infoSignal("alpha time cost:" +
-		QString::number((double)(end - start) / CLOCKS_PER_SEC, 'f', 2) + 's');
+
+	if (para.getInt("use_timecost_output")) {
+		emit infoSignal("alpha time cost:" +
+			QString::number((double)(end - start) / CLOCKS_PER_SEC, 'f', 2) + 's');
+	}
 }
 
 void L1median::computeBetasTerms()
@@ -435,8 +510,12 @@ void L1median::computeBetasTerms()
 		}
 	}
 	clock_t end = clock();
-	emit infoSignal("beta time cost:" +
-		QString::number((double)(end - start) / CLOCKS_PER_SEC, 'f', 2) + 's');
+
+	if (para.getInt("use_timecost_output")) {
+		emit infoSignal("beta time cost:" +
+			QString::number((double)(end - start) / CLOCKS_PER_SEC, 'f', 2) + 's');
+	}
+
 }
 
 double L1median::updateSamplePos()
@@ -534,23 +613,35 @@ void L1median::growAllBranches()
 	}
 	if(addNewBranch) emit skelChangeSignal();
 	clock_t end = clock();
-	emit infoSignal("branch grow time:" +
-		QString::number((double)(end - start) / CLOCKS_PER_SEC, 'f', 2) + 's');
 
+	if (para.getInt("use_timecost_output")) {
+		emit infoSignal("branch grow time:" +
+			QString::number((double)(end - start) / CLOCKS_PER_SEC, 'f', 2) + 's');
+	}
 }
 
 
 void L1median::computeDensity()
 {
+	clock_t start = clock();
 	density.clear();
 	int size = origin->points.size();
 	density.resize(size);
 	int index = 0;
+
+	omp_set_num_threads(para.getInt("density_thread_num"));
+#pragma omp parallel for
 	for (int i = 0; i < size; ++i) {
-		vector<int> neighIndex;
-		vector<float> neighDistance;
+		vector<int> neighIndex(1000);
+		vector<float> neighDistance(1000);
 		density[i] = originKdtree.radiusSearch(i, this->h, neighIndex, neighDistance);
 		density[i] = 1 / density[i];
+	}
+
+	clock_t end = clock();
+	if(para.getInt("use_timecost_output")){
+		emit infoSignal("density time cost:" +
+			QString::number((double)(end - start) / CLOCKS_PER_SEC, 'f', 2) + 's');
 	}
 }
 

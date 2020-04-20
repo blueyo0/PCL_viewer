@@ -27,20 +27,26 @@ namespace GlobalDef {
 		make_pair("moving_error_threshold",		0.0005),
 		make_pair("moving_error_factor",		0.30),
 		make_pair("candidate_sigma_threshold",	0.80),
-		make_pair("too_close_dist_threshold",	0.001),
+		make_pair("too_close_dist_threshold",	0.01),
 		make_pair("repulsion_factor",			0.35),
-		make_pair("use_density_weight",		int(true)),
-		make_pair("use_down_sample",		int(false)),
-		make_pair("use_power_distance",		int(false)),
-		make_pair("use_error_measurement",	int(false))
+		make_pair("density_thread_num",			8), 
+		// 不使用多线程时couple density计算需要35.55s
+		// 经过测试，线程数为8-16时可以稳定在9s内
+		make_pair("use_density_weight",			int(true)),
+		make_pair("use_down_sample",			int(false)),
+		make_pair("use_power_distance",			int(false)),
+		make_pair("use_auto_error",				int(false)),
+		make_pair("use_timecost_output",		int(true)),
+		make_pair("use_close_neigh_removement",	int(false))
 	};
 
 	vector<pair<string, Value>> PARA_Common = {
 		make_pair("skeleton_branch_size", 0.01),
 		make_pair("skeleton_point_size", 0.02),
 		make_pair("sample_point_size", 8),
-		make_pair("sigma_display_mode", 1),
-		make_pair("use_test_hole",	int(false))
+		make_pair("sigma_display_mode", 1), // 1 为使用sigma模式， 其它为使用kind模式
+		make_pair("use_test_hole",	int(false)),
+		make_pair("use_coordinate",	int(true))
 	};
 
 

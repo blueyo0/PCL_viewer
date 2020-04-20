@@ -690,10 +690,50 @@ void QT_PCL_Segmentation::onUpdate()
 
 	ui.InfoText->append(
 		"坐标: (" + 
-		QString::number(this->sampleCloud->points[0].x, 'f', 2) + ", " +
-		QString::number(this->sampleCloud->points[0].y, 'f', 2) + ", " +
-		QString::number(this->sampleCloud->points[0].z, 'f', 2) + ")"
+		QString::number(this->sampleCloud->points[803].x, 'f', 2) + ", " +
+		QString::number(this->sampleCloud->points[803].y, 'f', 2) + ", " +
+		QString::number(this->sampleCloud->points[803].z, 'f', 2) + ")\n"+
+		"sigma: "+ QString::number(sampleSigma[803], 'f', 4)
 	);
+
+	if (common.getInt("use_coordinate")) {
+		for (int i = 0; i < 3; ++i) {
+			string coord_name = "coordinate" + i;
+			PointXYZ pt = { -1,-1,-1 };
+			PointXYZ nextPt = { -1,-1,-1 };
+			PointXYZ color = { 0, 0, 0 };
+			switch (i)
+			{
+			case 0:
+				nextPt.x += 0.3;
+				color.x = 1;
+				break;
+			case 1:
+				nextPt.y += 0.3;
+				color.y = 1;
+				break;
+			case 2:
+				nextPt.z += 0.3;
+				color.z = 1;
+				break;
+			default:
+				break;
+			}
+			viewer->removeShape(coord_name);
+			pcl::ModelCoefficients cylinder_coeff;
+			cylinder_coeff.values.resize(7);
+			cylinder_coeff.values[0] = pt.x;
+			cylinder_coeff.values[1] = pt.y;
+			cylinder_coeff.values[2] = pt.z;
+			cylinder_coeff.values[3] = nextPt.x - pt.x;
+			cylinder_coeff.values[4] = nextPt.y - pt.y;
+			cylinder_coeff.values[5] = nextPt.z - pt.z;
+			cylinder_coeff.values[6] = 0.01;
+			viewer->addCylinder(cylinder_coeff, coord_name);
+			viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 
+												color.x, color.y, color.z, coord_name);
+		}
+	}
 }
 
 void QT_PCL_Segmentation::updateAllDockWidget()
