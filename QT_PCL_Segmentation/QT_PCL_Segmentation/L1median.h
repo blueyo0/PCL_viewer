@@ -2,6 +2,7 @@
 #include "PointCloudAlgorithm.h"
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/kdtree/kdtree_flann.h>
 #include <vector>
 #include "PointInfo.h"
 
@@ -47,6 +48,8 @@ private:
 	PointCloud<PointXYZ>::Ptr origin;
 	vector<vector<PointXYZ>> *skelPtr;
 	vector<double> density;
+	KdTreeFLANN<PointXYZ> originKdtree;
+	KdTreeFLANN<PointXYZ> selfKdtree;
 	double h = -1.0, h_increment = 0, guassin_factor=0;
 	double h_boundary = 1;
 	double rep_factor = 0;
@@ -70,7 +73,7 @@ public:
 	void computeDensity();
 	void preDownSample();
 
-	double updateSamplePos(); 
+	double updateSamplePos();
 	bool updateRemovedSample();
 	void growAllBranches();
 	double updateRadius();

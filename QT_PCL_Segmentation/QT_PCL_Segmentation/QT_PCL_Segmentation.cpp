@@ -22,8 +22,6 @@ VTK_MODULE_INIT(vtkInteractionStyle)
 #include <math.h>
 #include <utility>
 
-
-#include "AlgorithmThread.h"
 #include "TestMoving.h"
 #include "L1median.h"
 #include "GlobalDef.h"
@@ -125,9 +123,9 @@ void QT_PCL_Segmentation::onL1()
 	// slot connecting
 	connectCommonSlots();
 
-	AlgorithmThread *at = new AlgorithmThread(this->algorithm);
+	atPtr = new AlgorithmThread(this->algorithm);
 	//this->moveToThread(at);
-	at->start();
+	atPtr->start();
 }
 //TestMoving
 void QT_PCL_Segmentation::onMoving()
@@ -144,9 +142,9 @@ void QT_PCL_Segmentation::onMoving()
 	// slot connecting
 	connectCommonSlots();
 
-	AlgorithmThread *at = new AlgorithmThread(this->algorithm);
+	atPtr = new AlgorithmThread(this->algorithm);
 	//this->moveToThread(at);
-	at->start();
+	atPtr->start();
 }
 
 //一些简单的小功能
@@ -470,6 +468,7 @@ void QT_PCL_Segmentation::testUIready()
 void QT_PCL_Segmentation::testPCLready()
 {
 	//---------------------PCL_segmentation--------------------------------------------------
+	ParameterSet common = paraMgr->getSubSet(GlobalDef::Common);
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
 	// Fill in the cloud data
@@ -483,6 +482,10 @@ void QT_PCL_Segmentation::testPCLready()
 	for (size_t i = 0; i < cloud->points.size(); ++i)
 	{
 		double radius = 0.4 + 0.1 * rand() / (RAND_MAX + 1.0f);
+		if (bool(common.getInt("use_test_hole"))) {
+			radius = (radius > 0.45) ? 0.5 : 0.4;
+			radius += 0.02 * rand() / (RAND_MAX + 1.0f);
+		}
 		double theta = 2*3.1415926 * rand() / (RAND_MAX + 1.0f);
 
 		cloud->points[i].x = 0.5 + radius * cos(theta);
@@ -601,9 +604,12 @@ void QT_PCL_Segmentation::clearPointCloud()
 
 void QT_PCL_Segmentation::resetPointCloud()
 {
+	if (this->algorithm != NULL) {
+		this->algorithm->reset();
+		atPtr->quit();
+	}
 	viewer->resetCamera();
 	ui.qvtkWidget->update();
-	if (this->algorithm != NULL) this->algorithm->reset();
 }
 
 
@@ -655,7 +661,6 @@ void QT_PCL_Segmentation::displaySampleWithSigma()
 		//pt.rgb = 1.0 - sampleSigma[i];
 		colored_sample->points.push_back(pt);
 	}
-	// TO-DO display colored sample
 	viewer->removePointCloud("sample_cloud");
 	//pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZRGB> fildColor(colored_sample, "rgb");
 	//viewer->addPointCloud<pcl::PointXYZRGB>(colored_sample, fildColor, "sample_cloud");
@@ -902,7 +907,7 @@ void QT_PCL_Segmentation::displayAlgorithmInfo(const QString name)
 }
 void QT_PCL_Segmentation::displayAlgorithmError(const QString name)
 {
-	ui.InfoText->append("<ERROR> " + name + "\n");
+	ui.InfoText->append("<font color=\"#087611\"><ERROR> " + name + "</font>");
 }
 
 void QT_PCL_Segmentation::updateAlgorithmState()
@@ -910,7 +915,7 @@ void QT_PCL_Segmentation::updateAlgorithmState()
 	if(this->isAlgorithmRunning) this->isAlgorithmRunning = false;
 	this->sampleStatus.resize(this->sampleCloud->points.size(), pi::Sample);
 	this->sampleSigma.resize(this->sampleCloud->points.size(), 0.0);
-	ui.InfoText->append("finish algorithm running!");
+	//ui.InfoText->append("finish algorithm running!");
 }
 
 

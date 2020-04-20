@@ -14,6 +14,7 @@
 #include "PointInfo.h"
 #include "ParameterMgr.h"
 #include "PointCloudAlgorithm.h"
+#include "AlgorithmThread.h"
 
 #include <pcl/common/projection_matrix.h>
 #include <pcl/ModelCoefficients.h>
@@ -51,6 +52,7 @@ private:
 
 private:
 	ParameterMgr *paraMgr = NULL;
+	AlgorithmThread *atPtr = NULL;
 	PointCloudAlgorithm *algorithm = NULL;
 	bool isAlgorithmRunning = false;
 	vector<vector<PointXYZ>>* skeleton = new vector<vector<PointXYZ>>({});

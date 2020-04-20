@@ -1,7 +1,6 @@
 #include "L1median.h"
 #include <QThread>
 #include <pcl/common/common.h>
-#include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/filters/voxel_grid.h>
 #include <math.h>
 
@@ -58,7 +57,7 @@ void L1median::run()
 			return;
 		}
 		double error = iterateReturnError();
-		if (i == 0) {
+		if (bool(para.getInt("use_error_measurement")) && i == 5) {
 			err_threshold = error * err_factor;
 			paraPtr->add("moving_error_threshold", err_threshold);
 			continue;
@@ -111,7 +110,6 @@ double L1median::iterateReturnError()
 	computeSigmas();
 
 	/*tracing搜寻骨骼*/
-	// TO-DO：tracing
 	//growAllBranches();
 
 
@@ -122,7 +120,6 @@ double L1median::iterateReturnError()
 
 void L1median::reset()
 {
-	// TO-DO: reset function
 	resetFlag = true;
 }
 
@@ -153,6 +150,8 @@ void L1median::initalizeParam()
 	for (PointXYZ pt : this->sample->points) {
 		this->sampleInfo.push_back(L1SampleInfo(pt));
 	}
+	originKdtree.setInputCloud(origin);
+	selfKdtree.setInputCloud(sample);
 }
 
 bool L1median::isSampleFixed(int index)
@@ -170,8 +169,6 @@ void L1median::computeOriginNeighbors()
 {
 	clock_t start = clock();
 	// origin neighbors
-	KdTreeFLANN<PointXYZ> kdtree;
-	kdtree.setInputCloud(origin);
 	int index = 0;
 	for (L1SampleInfo xsi : sampleInfo) {
 		if (isSampleFixed(index)) {
@@ -182,7 +179,7 @@ void L1median::computeOriginNeighbors()
 		PointXYZ xpt = xsi.pos;
 		vector<int> neighIndex;
 		vector<float> neighDistance;
-		int num = kdtree.radiusSearch(xpt, this->h, neighIndex, neighDistance);
+		int num = originKdtree.radiusSearch(xpt, this->h, neighIndex, neighDistance);
 
 		while (neighDistance.size() > 0 && neighDistance[0] == 0) {
 			neighDistance.erase(neighDistance.begin());
@@ -209,8 +206,6 @@ void L1median::computeSelfNeighbors()
 {
 	clock_t start = clock();
 	// self neighbors
-	KdTreeFLANN<PointXYZ> kdtree2;
-	kdtree2.setInputCloud(this->sample);
 	double combine_threshold = para.getDouble("too_close_dist_threshold");
 	combine_threshold = combine_threshold * combine_threshold;
 	int index = 0;
@@ -223,7 +218,7 @@ void L1median::computeSelfNeighbors()
 		}
 		vector<int> neighIndex;
 		vector<float> neighDistance;
-		int num = kdtree2.radiusSearch(index, this->h, neighIndex, neighDistance);
+		int num = selfKdtree.radiusSearch(index, this->h, neighIndex, neighDistance);
 
 		while (neighDistance.size() > 0 && neighDistance[0] == 0) {
 			neighIndex.erase(neighIndex.begin());
@@ -250,8 +245,8 @@ void L1median::computeSelfNeighbors()
 
 void L1median::computeNeighbors()
 {
-	computeSelfNeighbors();
 	computeOriginNeighbors();
+	computeSelfNeighbors();
 }
 
 void L1median::computeSigmas()
@@ -305,7 +300,7 @@ double L1median::updateRadius()
 {
 	h += h_increment;
 	h_increment = this->para.getDouble("h_increasing_rate")*h;
-	emit infoSignal("update radius to"+QString::number(h, 'f', 2));
+	emit infoSignal("<font color=\"#049f11\">update radius to "+QString::number(h, 'f', 2)+"</font>");
 	return h;
 }
 
@@ -361,17 +356,19 @@ bool L1median::updateRemovedSample()
 void L1median::computeAlphasTerms()
 {
 	clock_t start = clock();
+	bool isPowerUsed = bool(para.getInt("use_power_distance"));
 	guassin_factor = -4.0 / (h*h);
 	for (int i = 0; i < this->sampleInfo.size(); ++i) {
 		sampleInfo[i].average_term = PointXYZ(0, 0, 0);
 		sampleInfo[i].alpha.clear();
 		sampleInfo[i].alpha.resize(sampleInfo[i].o_indics.size());
 		for (int j = 0; j < sampleInfo[i].alpha.size(); ++j) {
-			//double dist2 = sampleInfo[i].o_dists[j];
-			//double dist = sqrt(dist2);
-			double dist = sampleInfo[i].o_dists[j];
-			double dist2 = dist * dist;
-			
+			double dist2 = sampleInfo[i].o_dists[j];
+			double dist = sqrt(dist2);
+			if (isPowerUsed) {
+				dist = sampleInfo[i].o_dists[j];
+				dist2 = dist * dist;
+			}			
 			PointXYZ qi = this->origin->points[sampleInfo[i].o_indics[j]];
 			// alpha = theta(dist)/dist
 			sampleInfo[i].alpha[j] = exp(dist2*guassin_factor)/pow(dist, avg_power);
@@ -401,16 +398,19 @@ void L1median::computeAlphasTerms()
 void L1median::computeBetasTerms()
 {
 	clock_t start = clock();
+	bool isPowerUsed = bool(para.getInt("use_power_distance"));
 	guassin_factor = -4.0 / (h*h);
 	for (int i = 0; i < this->sampleInfo.size(); ++i) {
 		sampleInfo[i].repulsion_term = PointXYZ(0, 0, 0);
 		sampleInfo[i].beta.clear();
 		sampleInfo[i].beta.resize(sampleInfo[i].s_indics.size());
 		for (int j = 0; j < sampleInfo[i].beta.size(); ++j) {
-			//double dist2 = sampleInfo[i].s_dists[j];
-			//double dist = sqrt(dist2);
-			double dist = sampleInfo[i].s_dists[j];
-			double dist2 = dist * dist;
+			double dist2 = sampleInfo[i].s_dists[j];
+			double dist = sqrt(dist2);
+			if (isPowerUsed) {
+				dist = sampleInfo[i].s_dists[j];
+				dist2 = dist * dist;
+			}
 
 			PointXYZ xi = this->sample->points[sampleInfo[i].s_indics[j]];
 			PointXYZ diff = PointXYZ(sampleInfo[i].pos.x - xi.x,
@@ -475,13 +475,15 @@ double L1median::updateSamplePos()
 			sampleInfo[i].average_term.y + rep_weight * sampleInfo[i].repulsion_term.y,
 			sampleInfo[i].average_term.z + rep_weight * sampleInfo[i].repulsion_term.z
 		);
-		error += sqrt(
-			(newPt.x - sampleInfo[i].pos.x)*(newPt.x - sampleInfo[i].pos.x) +
-			(newPt.y - sampleInfo[i].pos.y)*(newPt.y - sampleInfo[i].pos.y) +
-			(newPt.z - sampleInfo[i].pos.z)*(newPt.z - sampleInfo[i].pos.z)
-		);
+		if (sampleInfo[i].sigma != 0) {
+			error += sqrt(
+				(newPt.x - sampleInfo[i].pos.x)*(newPt.x - sampleInfo[i].pos.x) +
+				(newPt.y - sampleInfo[i].pos.y)*(newPt.y - sampleInfo[i].pos.y) +
+				(newPt.z - sampleInfo[i].pos.z)*(newPt.z - sampleInfo[i].pos.z)
+			);
+			count++;
+		}
 		sampleInfo[i].pos = newPt;
-		count++;
 	}
 	if (count == 0) return 0;
 	return error / count;
@@ -491,7 +493,6 @@ double L1median::updateSamplePos()
 void L1median::growAllBranches()
 {
 	// TO-DO: grow branch 的方向问题解决
-	// 防线
 	int a = 0;
 	clock_t start = clock();
 	vector<int> candidate_indics;
@@ -513,11 +514,13 @@ void L1median::growAllBranches()
 		vector<PointXYZ> branch = { sampleInfo[index].pos };
 		vector<int> branch_id = { index };
 		for (int i = 0; i < sampleInfo[index].s_dists.size(); ++i) {
-			double dist = sampleInfo[index].s_dists[i];
+			if (isSampleFixed(sampleInfo[index].s_indics[i])) continue;
+			double dist = sqrt(sampleInfo[index].s_dists[i]);
 			if (dist <= combine_threshold) {
 				sampleInfo[sampleInfo[index].s_indics[i]].kind = pi::Removed;
 				continue;
 			}
+			// TO-DO: 添加方向
 			branch.push_back(sample->points[sampleInfo[index].s_indics[i]]);
 			branch_id.push_back(sampleInfo[index].s_indics[i]);
 		}
@@ -542,16 +545,12 @@ void L1median::computeDensity()
 	density.clear();
 	int size = origin->points.size();
 	density.resize(size);
-	KdTreeFLANN<PointXYZ> kdtree;
-	kdtree.setInputCloud(origin);
 	int index = 0;
 	for (int i = 0; i < size; ++i) {
 		vector<int> neighIndex;
 		vector<float> neighDistance;
-		density[i] = kdtree.radiusSearch(origin->points[i], this->h, 
-										 neighIndex, neighDistance);
-		if (density[i] == 0) density[i] = 1;
-		else density[i] = 1 / density[i];
+		density[i] = originKdtree.radiusSearch(i, this->h, neighIndex, neighDistance);
+		density[i] = 1 / density[i];
 	}
 }
 
