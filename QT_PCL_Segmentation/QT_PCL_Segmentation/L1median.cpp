@@ -11,6 +11,7 @@
 #include <ctime>
 #include <queue>
 #include <thread>
+#include <fstream>
 
 using namespace Eigen;
 
@@ -65,6 +66,11 @@ void L1median::run()
 		total_iterate_count++;
 		emit infoSignal("iterate time: "+QString::number(total_iterate_count));
 		double error = iterateReturnError();
+
+		/*tracing搜寻骨骼*/
+		if (radius_increase_time > 1 && i >= 3) {
+			growAllBranches();
+		}
 
 		// for couple.ply test
 		int si_index = 0;
@@ -131,11 +137,6 @@ double L1median::iterateReturnError()
 		return 0.0;
 	}*/
 
-	/*tracing搜寻骨骼*/
-	//growAllBranches();
-
-
-
 	return error;
 }
 
@@ -172,6 +173,7 @@ void L1median::initalizeParam()
 	for (PointXYZ pt : this->sample->points) {
 		this->sampleInfo.push_back(L1SampleInfo(pt));
 	}
+	// 性能相关初始化
 	originKdtree.setInputCloud(origin);
 	selfKdtree.setInputCloud(sample);
 }
@@ -191,71 +193,22 @@ void L1median::computeOriginNeighbors()
 {
 	clock_t start = clock();
 	// origin neighbors
-	int index = 0;
 	// 使用omp方式进行多线程计算
 
 	omp_set_num_threads(para.getInt("density_thread_num"));
-#pragma omp parallel for
+#pragma omp parallel for 
 	for (int index = 0; index < sampleInfo.size(); ++index) {
-		if (isSampleFixed(index)) {
-			sampleInfo[index].o_indics.clear();
-			sampleInfo[index].o_dists.clear();
-			continue;
-		}
-		L1SampleInfo xsi = sampleInfo[index];
-		PointXYZ xpt = xsi.pos;
 		vector<int> neighIndex(1000);
 		vector<float> neighDistance(1000);
+		PointXYZ xpt = sampleInfo[index].pos;
 		int num = originKdtree.radiusSearch(xpt, this->h, neighIndex, neighDistance);
-
-		while (neighDistance.size() > 0 && neighDistance[0] == 0) {
-			neighDistance.erase(neighDistance.begin());
-			neighIndex.erase(neighIndex.begin());
-		}
-
-		// TO-DO: 通过裁剪半径的kdtree搜索加速 （此方案暂时弃用）
-		// URL: https://blog.csdn.net/qq_34719188/article/details/102565436
-		/*double cutted_h = this->h / radius_increase_time;
-		queue<PointXYZ> cachePointQueue;
-		cachePointQueue.push(xpt);
-		int iterate_limit = 1;
-		int iterate_time = 0;
-		int total_iterate_time = 0;
-		while (!cachePointQueue.empty()) {
-			PointXYZ search_pt = cachePointQueue.front();
-			cachePointQueue.pop();
-			originKdtree.radiusSearch(search_pt, cutted_h, neighIndex, neighDistance);
-			while (neighDistance.size() > 0 && neighDistance[0] == 0) {
-				neighDistance.erase(neighDistance.begin());
-				neighIndex.erase(neighIndex.begin());
-			}
-			for (int n_i : neighIndex) {
-				cachePointQueue.push(origin->points[n_i]);
-			}
-			iterate_time++;
-			if (iterate_time == iterate_limit) {
-				iterate_limit = cachePointQueue.size();
-				iterate_time = 0;
-				total_iterate_time++;
-			}
-			if (total_iterate_time > radius_increase_time) {
-				break;
-			}
-		}*/
-					
-		/*for (int i = 0; i < neighDistance.size(); ++i) {
-			//if (neighDistance[i]<1e-8 || neighDistance[i]>1e8) {
-			//	neighIndex.erase(neighIndex.begin() + i);
-			//	neighDistance.erase(neighDistance.begin() + i);
-			//	i--;
-			//}
-		}*/
-
 		sampleInfo[index].o_indics = neighIndex;
 		sampleInfo[index].o_dists = neighDistance;
 	}
-	clock_t end = clock();
 
+	//omp_set_num_threads(1);
+
+	clock_t end = clock();
 	if (para.getInt("use_timecost_output")) {
 		emit infoSignal("o_neigh time cost:" +
 			QString::number((double)(end - start) / CLOCKS_PER_SEC, 'f', 2) + 's');
@@ -267,17 +220,15 @@ void L1median::computeSelfNeighbors()
 	// self neighbors
 	double combine_threshold = para.getDouble("too_close_dist_threshold");
 	combine_threshold = combine_threshold * combine_threshold;
-	int index = 0;
 	for (int j = 0; j < this->sample->points.size(); ++j) {
-		if (isSampleFixed(index)) {
-			sampleInfo[index].s_indics.clear();
-			sampleInfo[index].s_dists.clear();
-			index++;
+		if (isSampleFixed(j)) {
+			sampleInfo[j].s_indics.clear();
+			sampleInfo[j].s_dists.clear();
 			continue;
 		}
 		vector<int> neighIndex(1000);
 		vector<float> neighDistance(1000);
-		int num = selfKdtree.radiusSearch(index, this->h, neighIndex, neighDistance);
+		int num = selfKdtree.radiusSearch(j, this->h, neighIndex, neighDistance);
 
 		while (neighDistance.size() > 0 && neighDistance[0] == 0) {
 			neighIndex.erase(neighIndex.begin());
@@ -295,9 +246,8 @@ void L1median::computeSelfNeighbors()
 				}
 			}
 		}
-		sampleInfo[index].s_indics = neighIndex;
-		sampleInfo[index].s_dists = neighDistance;
-		index++;
+		sampleInfo[j].s_indics = neighIndex;
+		sampleInfo[j].s_dists = neighDistance;
 	}
 	clock_t end = clock();
 	if (para.getInt("use_timecost_output")) {
@@ -315,7 +265,6 @@ void L1median::computeNeighbors()
 void L1median::computeSigmas()
 {
 	clock_t start = clock();
-	double threshold = para.getDouble("candidate_sigma_threshold");
 	double max_sigma = 0.0;
 	for (int i = 0; i < sampleInfo.size(); ++i) {
 		int size = sampleInfo[i].s_indics.size();
@@ -323,35 +272,32 @@ void L1median::computeSigmas()
 			sampleInfo[i].sigma = 0.0;
 			continue;
 		}
-		if (size < 3) {
-			sampleInfo[i].sigma = 0.95;
+		/*if (size == 1) {
+			sampleInfo[i].sigma = 0.0;
 			continue;
-		}
-		Matrix3d mm;
+		}*/
+		Matrix3f mm = Matrix3f::Zero(3,3);
 		for (int x_index : sampleInfo[i].s_indics) {
 			if (x_index >= sampleInfo.size()) {
 				emit errorSignal("out of range in computing sigma");
 				continue;
 			}
-			Vector3d v (sampleInfo[i].pos.x - sample->points[x_index].x,
+			Vector3f v (sampleInfo[i].pos.x - sample->points[x_index].x,
 						sampleInfo[i].pos.y - sample->points[x_index].y,
 						sampleInfo[i].pos.z - sample->points[x_index].z);
 			mm += v * v.adjoint();
 		}
-		Vector3cd eigens = mm.eigenvalues();
-		Vector3d eigenVec(eigens(0).real() > 0.0 ? eigens(0).real() : 0.0,
+		Vector3cf eigens = mm.eigenvalues();
+		Vector3f eigenVec(eigens(0).real() > 0.0 ? eigens(0).real() : 0.0,
 						  eigens(1).real() > 0.0 ? eigens(1).real() : 0.0,
 						  eigens(2).real() > 0.0 ? eigens(2).real() : 0.0);
+
 		sampleInfo[i].sigma = eigenVec.maxCoeff() / eigens.sum().real();
 		if (sampleInfo[i].sigma > 1.0) {
-			emit errorSignal("sigma > 1?");
-			continue;
+			sampleInfo[i].sigma = 1.0;
 		}
 		if (sampleInfo[i].sigma > max_sigma) {
 			max_sigma = sampleInfo[i].sigma;
-		}
-		if (sampleInfo[i].sigma > threshold) {
-			sampleInfo[i].kind = pi::Candidate;
 		}
 	}
 	clock_t end = clock();
@@ -428,12 +374,16 @@ bool L1median::updateRemovedSample()
 void L1median::computeAlphasTerms()
 {
 	clock_t start = clock();
-	bool isPowerUsed = bool(para.getInt("use_power_distance"));
+	bool isPowerUsed = bool(para.getInt("use_multi_power_distance"));
 	guassin_factor = -4.0 / (h*h);
+
+	omp_set_num_threads(para.getInt("density_thread_num"));
+#pragma omp parallel for
 	for (int i = 0; i < this->sampleInfo.size(); ++i) {
 		sampleInfo[i].average_term = PointXYZ(0, 0, 0);
 		sampleInfo[i].alpha.clear();
 		sampleInfo[i].alpha.resize(sampleInfo[i].o_indics.size());
+		double sum_alpha = 0;
 		for (int j = 0; j < sampleInfo[i].alpha.size(); ++j) {
 			double dist2 = sampleInfo[i].o_dists[j];
 			double dist = sqrt(dist2);
@@ -443,16 +393,17 @@ void L1median::computeAlphasTerms()
 			}			
 			PointXYZ qi = this->origin->points[sampleInfo[i].o_indics[j]];
 			// alpha = theta(dist)/dist
-			sampleInfo[i].alpha[j] = exp(dist2*guassin_factor)/pow(dist, avg_power);
+			if(dist!=0) sampleInfo[i].alpha[j] = exp(dist2*guassin_factor)/pow(dist, avg_power);
+			else sampleInfo[i].alpha[j] = 0;
 			if (isDensityWeighted) {
 				sampleInfo[i].alpha[j] *= density[sampleInfo[i].o_indics[j]];
 			}
+			sum_alpha += sampleInfo[i].alpha[j];
 			// average term = sum(q*alpha)/sum(alpha)
 			sampleInfo[i].average_term.x += qi.x * sampleInfo[i].alpha[j];
 			sampleInfo[i].average_term.y += qi.y * sampleInfo[i].alpha[j];
 			sampleInfo[i].average_term.z += qi.z * sampleInfo[i].alpha[j];
 		}
-		double sum_alpha = std::accumulate(sampleInfo[i].alpha.begin(), sampleInfo[i].alpha.end(), 0.0);
 		if (sum_alpha != 0) {
 			sampleInfo[i].average_term.x /= sum_alpha;
 			sampleInfo[i].average_term.y /= sum_alpha;
@@ -473,8 +424,11 @@ void L1median::computeAlphasTerms()
 void L1median::computeBetasTerms()
 {
 	clock_t start = clock();
-	bool isPowerUsed = bool(para.getInt("use_power_distance"));
+	bool isPowerUsed = bool(para.getInt("use_multi_power_distance"));
 	guassin_factor = -4.0 / (h*h);
+
+	omp_set_num_threads(para.getInt("density_thread_num"));
+#pragma omp parallel for
 	for (int i = 0; i < this->sampleInfo.size(); ++i) {
 		sampleInfo[i].repulsion_term = PointXYZ(0, 0, 0);
 		sampleInfo[i].beta.clear();
@@ -573,29 +527,36 @@ void L1median::growAllBranches()
 {
 	// TO-DO: grow branch 的方向问题解决
 	int a = 0;
-	clock_t start = clock();
+	double threshold = para.getDouble("candidate_sigma_threshold");
 	vector<int> candidate_indics;
+	clock_t start = clock();
+	
 	for (int i = 0; i < sampleInfo.size(); ++i) {
-		if (sampleInfo[i].kind == pi::Candidate) {
-			if (candidate_indics.empty()) candidate_indics.push_back(i);
-			else if (sampleInfo[i].sigma > sampleInfo[0].sigma) {
-				candidate_indics.insert(candidate_indics.begin(), i);
-			}
-			else {
-				candidate_indics.push_back(i);
+		if (!isSampleFixed(i)) {
+			sampleInfo[i].kind = (sampleInfo[i].sigma > threshold) ? pi::Candidate : sampleInfo[i].kind;
+			if (sampleInfo[i].kind == pi::Candidate) {
+				if (candidate_indics.empty()) candidate_indics.push_back(i);
+				else if (sampleInfo[i].sigma > sampleInfo[0].sigma) {
+					candidate_indics.insert(candidate_indics.begin(), i);
+				}
+				else {
+					candidate_indics.push_back(i);
+				}
 			}
 		}
 	}
+
 	bool addNewBranch = false;
-	double combine_threshold = para.getDouble("too_close_dist_threshold");
+	double combine_threshold = para.getDouble("too_close_dist_threshold")*10;
+	combine_threshold = combine_threshold * combine_threshold;
 	for (int index : candidate_indics) {
+		if (addNewBranch) continue;
 		if (isSampleFixed(index)) continue;
 		vector<PointXYZ> branch = { sampleInfo[index].pos };
 		vector<int> branch_id = { index };
 		for (int i = 0; i < sampleInfo[index].s_dists.size(); ++i) {
 			if (isSampleFixed(sampleInfo[index].s_indics[i])) continue;
-			double dist = sqrt(sampleInfo[index].s_dists[i]);
-			if (dist <= combine_threshold) {
+			if (sampleInfo[index].s_dists[i] <= combine_threshold) {
 				sampleInfo[sampleInfo[index].s_indics[i]].kind = pi::Removed;
 				continue;
 			}
@@ -603,12 +564,22 @@ void L1median::growAllBranches()
 			branch.push_back(sample->points[sampleInfo[index].s_indics[i]]);
 			branch_id.push_back(sampleInfo[index].s_indics[i]);
 		}
-		if (branch.size() > 2) {
+		if (branch.size() >= para.getInt("branch_tracing_num")) {
 			for (int id : branch_id) {
 				sampleInfo[id].kind = pi::Branch;
+				for (int n_i = 0; n_i < sampleInfo[id].s_dists.size(); ++n_i) {
+					if (sampleInfo[id].s_dists[n_i] <= combine_threshold) {
+						sampleInfo[sampleInfo[id].s_indics[n_i]].kind = pi::Removed;
+					}
+					else {
+						break;
+					}
+				}
+
 			}
 			this->skelPtr->push_back(branch);
 			addNewBranch = true;
+			// TO-DO: 删除多余点
 		}
 	}
 	if(addNewBranch) emit skelChangeSignal();
@@ -620,6 +591,11 @@ void L1median::growAllBranches()
 	}
 }
 
+void L1median::setFileName(string name)
+{
+	filename = name.substr(0, name.length() - 3) + "dens";
+}
+
 
 void L1median::computeDensity()
 {
@@ -627,7 +603,28 @@ void L1median::computeDensity()
 	density.clear();
 	int size = origin->points.size();
 	density.resize(size);
-	int index = 0;
+
+	// 先尝试读取file
+	ifstream infile(filename, ios::in);
+	if (infile.is_open()) {
+		int i = 0;
+		while (!infile.eof()) {
+			if (i >= density.size()) {
+				break;
+			}
+			infile >> density[i];
+			i++;
+		}
+		infile.close();
+		if (i != size) {
+			emit errorSignal("point num error in density file");
+		}
+		else {
+			return;
+		}
+	}
+
+	// 读取失败
 
 	omp_set_num_threads(para.getInt("density_thread_num"));
 #pragma omp parallel for
@@ -639,6 +636,12 @@ void L1median::computeDensity()
 	}
 
 	clock_t end = clock();
+	ofstream outfile(filename, ios::out);
+	for (double dens : density) {
+		outfile << dens << endl;
+	}
+	outfile.close();
+	omp_set_num_threads(1);
 	if(para.getInt("use_timecost_output")){
 		emit infoSignal("density time cost:" +
 			QString::number((double)(end - start) / CLOCKS_PER_SEC, 'f', 2) + 's');

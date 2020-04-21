@@ -45,6 +45,7 @@ private:
 	vector<L1SampleInfo> sampleInfo;
 	vector<pi::PtKind> *status;
 	vector<double> *sigmaPtr;
+	string filename;
 	PointCloud<PointXYZ>::Ptr origin;
 	vector<vector<PointXYZ>> *skelPtr;
 	vector<double> density;
@@ -91,6 +92,7 @@ public:
 		vector<pi::PtKind>*					
 		); // para + origin + sample
 	void setSigmaPtr(vector<double>*);
+	void setFileName(string);
 
 	virtual ~L1median();
 

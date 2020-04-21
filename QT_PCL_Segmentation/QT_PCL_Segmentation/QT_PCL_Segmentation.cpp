@@ -118,6 +118,7 @@ void QT_PCL_Segmentation::onL1()
 	if (this->sampleCloud->points.size() < 1) onRandomSample();
 	L1median* l1ptr = new L1median(para, originCloud, sampleCloud, skeleton, &sampleStatus);
 	l1ptr->setSigmaPtr(&sampleSigma);
+	l1ptr->setFileName(this->cloudPath);
 	this->algorithm = l1ptr;
 
 	// slot connecting
@@ -307,7 +308,7 @@ void QT_PCL_Segmentation::onDownSample() {
 	}
 	pcl::io::savePLYFileASCII(file_name.substr(0, file_name.length() - 4) + ".ply", *originCloud);
 
-	this->displaySelectedCloud(originCloud, { 250, 140, 20 }, 1, "cloud");
+	displayOriginCloud(originCloud);
 }
 
 void QT_PCL_Segmentation::downSample(std::string path) {
@@ -399,7 +400,7 @@ void QT_PCL_Segmentation::onOpenOff() {
 
 	GlobalFun::readOFF(file_name);
 
-	displaySelectedCloud(originCloud, { 250, 140, 20 }, 1, "cloud");
+	displayOriginCloud(originCloud);
 
 }
 //保存off格式的数据(ROSA算法使用格式)
@@ -572,7 +573,13 @@ void QT_PCL_Segmentation::displaySelectedCloud(const PointCloud<PointXYZ>::Ptr i
 
 void QT_PCL_Segmentation::displayOriginCloud(PointCloud<PointXYZ>::Ptr cloud)
 {
-	this->displaySelectedCloud(cloud, { 250, 140, 20 }, 1, "cloud");
+	ParameterSet common = paraMgr->getSubSet(GlobalDef::Common);
+	if (common.getInt("sigma_display_mode") == 1) {
+		this->displaySelectedCloud(cloud, { 200, 200, 200 }, 1, "cloud");
+	}
+	else {
+		this->displaySelectedCloud(cloud, { 250, 140, 20 }, 1, "cloud");
+	}
 }
 
 void QT_PCL_Segmentation::displaySampleCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr inCloud) {
@@ -596,7 +603,7 @@ void QT_PCL_Segmentation::clearPointCloud()
 	this->normalCloud.reset(new PointCloud<Normal>);
 	viewer->removeAllPointClouds();
 	viewer->removeAllShapes();
-	this->displaySelectedCloud(originCloud, { 250, 140, 20 }, 1, "cloud");
+	this->displayOriginCloud(originCloud);
 	viewer->resetCamera();
 
 	ui.qvtkWidget->update();
@@ -608,6 +615,7 @@ void QT_PCL_Segmentation::resetPointCloud()
 		this->algorithm->reset();
 		atPtr->quit();
 	}
+	//onUpdate();
 	viewer->resetCamera();
 	ui.qvtkWidget->update();
 }
@@ -681,12 +689,14 @@ void QT_PCL_Segmentation::onUpdate()
 		displaySampleWithKind();
 	}
 
-	viewer->removeShape("radius_sphere");
-	pi::RGB color = { 0, 135, 0 };
-	double radius = paraMgr->getSubSet(GlobalDef::L1median).getDouble("neighborhood_size");
-	viewer->addSphere(this->sampleCloud->points[0], radius,
-					  color.r, color.g, color.b, "radius_sphere");
-	viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.05, "radius_sphere");
+	if (common.getInt("use_ball_neigh_display")) {
+		viewer->removeShape("radius_sphere");
+		pi::RGB color = { 0, 135, 0 };
+		double radius = paraMgr->getSubSet(GlobalDef::L1median).getDouble("neighborhood_size");
+		viewer->addSphere(this->sampleCloud->points[0], radius,
+			color.r, color.g, color.b, "radius_sphere");
+		viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.05, "radius_sphere");
+	}
 
 	ui.InfoText->append(
 		"坐标: (" + 
