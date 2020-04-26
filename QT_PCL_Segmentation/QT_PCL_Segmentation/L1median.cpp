@@ -5,15 +5,13 @@
 #include <pcl/filters/voxel_grid.h>
 #include <math.h>
 
-#include <Eigen/Dense>
-#include <Eigen/Eigenvalues>
 
 #include <ctime>
 #include <queue>
 #include <thread>
 #include <fstream>
 
-using namespace Eigen;
+
 
 L1median::L1median(ParameterSet* in_paraSet, PointCloud<PointXYZ>::Ptr in_origin, 
 				   PointCloud<PointXYZ>::Ptr in_sample, vector<vector<PointXYZ>>* in_skel,
@@ -523,68 +521,126 @@ double L1median::updateSamplePos()
 }
 
 
+vector<PointXYZ> L1median::searchBranchByDirection(int start_index, Vector3d direction)
+{
+	vector<pair<int, PointXYZ>> branch;
+	double dist2_threshold = para.getDouble("too_close_dist_threshold");
+	int angle_threshold = para.getInt("branch_max_angle");
+	dist2_threshold = dist2_threshold * dist2_threshold;
+	int next_index = start_index;
+	int curr_index = -1;
+	while (curr_index!=next_index) {
+		// TO-DO: 这个循环还有部分问题需要验证
+		curr_index = next_index;
+		L1SampleInfo xi = sampleInfo[curr_index];
+		// 验证是否形成环
+		bool isCircle = false;
+		for (pair<int, PointXYZ> xp : branch) {
+			if (xp.first == curr_index) {
+				isCircle = true;
+				break;
+			}
+		}
+		if (isCircle) {
+			break;
+		}
+		branch.push_back(make_pair(curr_index, xi.pos));
+		for (int i = 0; i < xi.s_indics.size(); ++i) {
+			double dist2 = xi.s_dists[i];
+			if (dist2 < dist2_threshold) sampleInfo[xi.s_indics[i]].kind = pi::Removed;
+			if (xi.s_indics[i] == curr_index) continue;
+			if (sampleInfo[xi.s_indics[i]].kind != pi::Candidate) continue;
+			L1SampleInfo xj = sampleInfo[xi.s_indics[i]];
+			Vector3d next_direction(
+				xj.pos.x - xi.pos.x,
+				xj.pos.y - xi.pos.y,
+				xj.pos.z - xi.pos.z
+			);
+			if (next_direction.dot(direction) < 0) continue;
+			double angle = acos(next_direction.dot(direction) / (
+								sqrt(next_direction.dot(next_direction)) *
+								sqrt(direction.dot(direction)))) * 180/3.1415926;
+			if (angle < angle_threshold) {
+				// 距离不过近的,方向统一的candidate neighbor
+				direction = next_direction;
+				next_index = xi.s_indics[i];
+				break;
+			}
+		}
+	}
+	vector<PointXYZ> pt_branch;
+	for (pair<int, PointXYZ> node : branch) {
+		pt_branch.push_back(node.second);
+	}
+	return pt_branch;
+}
+
+
+
+bool compare(pair<int, double> a, pair<int, double> b)
+{
+	return a.second > b.second; //降序排列
+}
+
 void L1median::growAllBranches()
 {
-	// TO-DO: grow branch 的方向问题解决
 	int a = 0;
 	double threshold = para.getDouble("candidate_sigma_threshold");
-	vector<int> candidate_indics;
+	int tracing_num = para.getInt("branch_tracing_num");
+	vector<pair<int, double>> candidate_vec;
 	clock_t start = clock();
 	
+	//降序获得sigma数组
 	for (int i = 0; i < sampleInfo.size(); ++i) {
-		if (!isSampleFixed(i)) {
-			sampleInfo[i].kind = (sampleInfo[i].sigma > threshold) ? pi::Candidate : sampleInfo[i].kind;
-			if (sampleInfo[i].kind == pi::Candidate) {
-				if (candidate_indics.empty()) candidate_indics.push_back(i);
-				else if (sampleInfo[i].sigma > sampleInfo[0].sigma) {
-					candidate_indics.insert(candidate_indics.begin(), i);
-				}
-				else {
-					candidate_indics.push_back(i);
-				}
+		if (!isSampleFixed(i) && sampleInfo[i].sigma > threshold) {
+			sampleInfo[i].kind = pi::Candidate;
+			candidate_vec.push_back(make_pair(i, sampleInfo[i].sigma));
+		}
+	}
+	sort(candidate_vec.begin(), candidate_vec.end(), compare);
+
+	//从sigma最高的点开始search branch
+	bool addNewBranch = true;
+	for (pair<int, double> candidate : candidate_vec) {
+		L1SampleInfo xi = sampleInfo[candidate.first];
+		if (xi.kind != pi::Candidate) continue;
+		int xj_index = -1;
+		// 找到距xi最近的candidate(xj), 沿着xi->xj和xi<-xj两个方向搜索
+		for (int s_index : xi.s_indics) {
+			if (sampleInfo[s_index].kind == pi::Candidate) {
+				xj_index = s_index;
+				break;
+			}
+		}
+		if (xj_index != -1) {
+			Vector3d direction(
+				xi.pos.x - sampleInfo[xj_index].pos.x,
+				xi.pos.y - sampleInfo[xj_index].pos.y,
+				xi.pos.z - sampleInfo[xj_index].pos.z
+			);
+
+			vector<PointXYZ> posi_branch = searchBranchByDirection(candidate.first, direction);
+			vector<PointXYZ> nega_branch = searchBranchByDirection(candidate.first, -1*direction);
+			vector<PointXYZ> total_branch;
+			for (vector<PointXYZ>::reverse_iterator riter = nega_branch.rbegin(); 
+				 riter != nega_branch.rend(); ++riter) {
+				total_branch.push_back(*riter);
+			}
+			for (int posi_index = 1; posi_index < posi_branch.size(); ++posi_index) {
+				total_branch.push_back(posi_branch[posi_index]);
+			}
+			// 获得两个方向拼接的骨骼后
+			if (total_branch.size() >= tracing_num) {
+				skelPtr->push_back(total_branch); 
+				// TO-DO: 获取branch下标并修改类型为branch
+				addNewBranch = true;
 			}
 		}
 	}
+	if (addNewBranch) emit skelChangeSignal();
 
-	bool addNewBranch = false;
-	double combine_threshold = para.getDouble("too_close_dist_threshold")*10;
-	combine_threshold = combine_threshold * combine_threshold;
-	for (int index : candidate_indics) {
-		if (addNewBranch) continue;
-		if (isSampleFixed(index)) continue;
-		vector<PointXYZ> branch = { sampleInfo[index].pos };
-		vector<int> branch_id = { index };
-		for (int i = 0; i < sampleInfo[index].s_dists.size(); ++i) {
-			if (isSampleFixed(sampleInfo[index].s_indics[i])) continue;
-			if (sampleInfo[index].s_dists[i] <= combine_threshold) {
-				sampleInfo[sampleInfo[index].s_indics[i]].kind = pi::Removed;
-				continue;
-			}
-			// TO-DO: 添加方向
-			branch.push_back(sample->points[sampleInfo[index].s_indics[i]]);
-			branch_id.push_back(sampleInfo[index].s_indics[i]);
-		}
-		if (branch.size() >= para.getInt("branch_tracing_num")) {
-			for (int id : branch_id) {
-				sampleInfo[id].kind = pi::Branch;
-				for (int n_i = 0; n_i < sampleInfo[id].s_dists.size(); ++n_i) {
-					if (sampleInfo[id].s_dists[n_i] <= combine_threshold) {
-						sampleInfo[sampleInfo[id].s_indics[n_i]].kind = pi::Removed;
-					}
-					else {
-						break;
-					}
-				}
 
-			}
-			this->skelPtr->push_back(branch);
-			addNewBranch = true;
-			// TO-DO: 删除多余点
-		}
-	}
-	if(addNewBranch) emit skelChangeSignal();
 	clock_t end = clock();
-
 	if (para.getInt("use_timecost_output")) {
 		emit infoSignal("branch grow time:" +
 			QString::number((double)(end - start) / CLOCKS_PER_SEC, 'f', 2) + 's');

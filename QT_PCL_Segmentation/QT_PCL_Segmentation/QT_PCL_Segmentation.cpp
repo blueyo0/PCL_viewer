@@ -517,6 +517,21 @@ void QT_PCL_Segmentation::testPCLready()
 
 	ui.InfoText->setText(text);*/
 	this->resetPointCloud();
+
+	//其它测试
+	/*Vector3d next(0.0, 0.0, 0.11);
+	Vector3d curr(0.0, 0.11, 0.11);
+	double theta = acos(next.dot(curr) / (sqrt(next.dot(next)) * sqrt(curr.dot(curr))));
+	theta = theta * 180 / 3.1415926;
+	ui.InfoText->append("theta:" + QString::number(theta, 'f', 6));*/
+	/*double result = next.dot(curr);
+
+	Vector3d next2(0.0, 0.0, 0.11);
+	Vector3d curr2(0.0, -0.1, -0.1);
+	double result2 = next2.dot(curr2);
+	ui.InfoText->append("result2:" + QString::number(result2, 'f', 6));*/
+
+
 }
 
 void QT_PCL_Segmentation::testColorAmongAxis()
@@ -661,6 +676,7 @@ void QT_PCL_Segmentation::displaySampleWithSigma()
 	PointCloud<PointXYZRGB>::Ptr colored_sample(new PointCloud<PointXYZRGB>);
 	for (int i = 0; i < sampleCloud->points.size(); ++i) {
 		pi::RGB color = GlobalFun::getHotMapColor(sampleSigma[i]);
+		if (sampleStatus[i] == pi::Removed) color = { 200,200,200 };
 		PointXYZRGB pt(uint8_t(color.r), uint8_t(color.g), uint8_t(color.b));
 		pt.x = sampleCloud->points[i].x;
 		pt.y = sampleCloud->points[i].y;

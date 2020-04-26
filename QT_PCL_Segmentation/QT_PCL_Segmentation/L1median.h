@@ -4,10 +4,15 @@
 #include <pcl/point_types.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <vector>
+
+#include <Eigen/Dense>
+#include <Eigen/Eigenvalues>
+
 #include "PointInfo.h"
 
 using namespace pcl;
 using namespace std;
+using namespace Eigen;
 
 class L1SampleInfo 
 {
@@ -79,7 +84,10 @@ public:
 
 	double updateSamplePos();
 	bool updateRemovedSample();
+
 	void growAllBranches();
+	vector<PointXYZ> searchBranchByDirection(int start_index, Vector3d direction);
+
 	double updateRadius();
 	bool synSampleWithInfo();
 
