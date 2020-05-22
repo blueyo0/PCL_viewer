@@ -23,10 +23,10 @@ namespace GlobalDef {
 		make_pair("average_power",				1),
 		make_pair("repulsion_power",			3),
 		make_pair("down_sample_leaf",			0.01f),
-		make_pair("max_iterate_time",			55),
+		make_pair("max_iterate_time",			20),
 		make_pair("moving_error_threshold",		0.0005),
 		make_pair("moving_error_factor",		0.30),
-		make_pair("candidate_sigma_threshold",	0.90),
+		make_pair("candidate_sigma_threshold",	0.85),
 		make_pair("too_close_dist_threshold",	0.01),
 		make_pair("branch_max_angle",			120),
 		make_pair("repulsion_factor",			0.35),
@@ -49,7 +49,7 @@ namespace GlobalDef {
 		make_pair("sigma_display_mode", 1), // 1 为使用sigma模式， 其它为使用kind模式
 		make_pair("use_test_hole",				int(false)),
 		make_pair("use_coordinate",				int(false)),
-		make_pair("use_ball_neigh_display",		int(false))
+		make_pair("use_ball_neigh_display",		int(true))
 	};
 
 

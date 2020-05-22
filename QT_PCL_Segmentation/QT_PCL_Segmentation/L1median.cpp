@@ -192,18 +192,33 @@ void L1median::computeOriginNeighbors()
 	clock_t start = clock();
 	// origin neighbors
 	// 使用omp方式进行多线程计算
-
+	int max_nn = 1000;
 	omp_set_num_threads(para.getInt("density_thread_num"));
 #pragma omp parallel for 
 	for (int index = 0; index < sampleInfo.size(); ++index) {
-		vector<int> neighIndex(1000);
-		vector<float> neighDistance(1000);
+		vector<int> neighIndex(max_nn);
+		vector<float> neighDistance(max_nn);
 		PointXYZ xpt = sampleInfo[index].pos;
-		int num = originKdtree.radiusSearch(xpt, this->h, neighIndex, neighDistance);
+		if (isfinite(xpt.x) && isfinite(xpt.y) && isfinite(xpt.z)) {
+			int num = originKdtree.radiusSearch(xpt, this->h, neighIndex, neighDistance);
+			//int num = originKdtree.nearestKSearch(xpt, 1000, neighIndex, neighDistance);
+		}
+		while (neighDistance.size() > 0 && neighDistance[0] < 0.00000001) {
+			neighIndex.erase(neighIndex.begin());
+			neighDistance.erase(neighDistance.begin());
+		}
 		sampleInfo[index].o_indics = neighIndex;
 		sampleInfo[index].o_dists = neighDistance;
 	}
 
+	/*for (int index = 0; index < sampleInfo.size(); ++index) {
+		for (int j = 0; j < sampleInfo[index].o_dists.size(); ++j) {
+			sampleInfo[index].o_dists[j]
+		}
+
+		sampleInfo[index].o_indics
+		
+	}*/
 	//omp_set_num_threads(1);
 
 	clock_t end = clock();
@@ -226,12 +241,26 @@ void L1median::computeSelfNeighbors()
 		}
 		vector<int> neighIndex(1000);
 		vector<float> neighDistance(1000);
-		int num = selfKdtree.radiusSearch(j, this->h, neighIndex, neighDistance);
+		PointXYZ xpt = sampleInfo[j].pos;
+		if (isfinite(xpt.x) && isfinite(xpt.y) && isfinite(xpt.z)) {
+			int num = selfKdtree.radiusSearch(j, this->h, neighIndex, neighDistance);
+			//int num = selfKdtree.nearestKSearch(j, 1000, neighIndex, neighDistance);
+		}
+		for (int e_id = 0; e_id < neighIndex.size(); ++e_id) {
+			if (neighDistance[e_id] < 0.00000001 || neighIndex[e_id] == j) {
+				neighIndex.erase(neighIndex.begin() + e_id);
+				neighDistance.erase(neighDistance.begin() + e_id);
 
-		while (neighDistance.size() > 0 && neighDistance[0] == 0) {
+			}
+		}
+		/*while (neighDistance.size() > 0 && neighDistance[0] < 0.00000001) {
 			neighIndex.erase(neighIndex.begin());
 			neighDistance.erase(neighDistance.begin());
-		}
+		}*/
+		
+
+
+
 		if (para.getInt("use_close_neigh_removement")) {
 			for (int i = 0; i < neighDistance.size(); ++i) {
 				if (neighDistance[i] < combine_threshold || isSampleFixed(neighIndex[i])) {
@@ -506,13 +535,20 @@ double L1median::updateSamplePos()
 			sampleInfo[i].average_term.y + rep_weight * sampleInfo[i].repulsion_term.y,
 			sampleInfo[i].average_term.z + rep_weight * sampleInfo[i].repulsion_term.z
 		);
+		if (!isfinite(newPt.x) || !isfinite(newPt.y) || !isfinite(newPt.z)) {
+			newPt = sampleInfo[i].pos;
+		}
+
 		if (sampleInfo[i].sigma != 0) {
-			error += sqrt(
+			double rms = sqrt(
 				(newPt.x - sampleInfo[i].pos.x)*(newPt.x - sampleInfo[i].pos.x) +
 				(newPt.y - sampleInfo[i].pos.y)*(newPt.y - sampleInfo[i].pos.y) +
 				(newPt.z - sampleInfo[i].pos.z)*(newPt.z - sampleInfo[i].pos.z)
 			);
-			count++;
+			if (isfinite(rms)) {
+				error += rms;
+				count++;
+			}				
 		}
 		sampleInfo[i].pos = newPt;
 	}
@@ -521,7 +557,7 @@ double L1median::updateSamplePos()
 }
 
 
-vector<PointXYZ> L1median::searchBranchByDirection(int start_index, Vector3d direction)
+vector<PointXYZ> L1median::searchBranchByDirection(int start_index, Vector3d direction, vector<int>& branch_index)
 {
 	vector<pair<int, PointXYZ>> branch;
 	double dist2_threshold = para.getDouble("too_close_dist_threshold");
@@ -571,6 +607,7 @@ vector<PointXYZ> L1median::searchBranchByDirection(int start_index, Vector3d dir
 	vector<PointXYZ> pt_branch;
 	for (pair<int, PointXYZ> node : branch) {
 		pt_branch.push_back(node.second);
+		branch_index.push_back(node.first);
 	}
 	return pt_branch;
 }
@@ -618,9 +655,13 @@ void L1median::growAllBranches()
 				xi.pos.y - sampleInfo[xj_index].pos.y,
 				xi.pos.z - sampleInfo[xj_index].pos.z
 			);
-
-			vector<PointXYZ> posi_branch = searchBranchByDirection(candidate.first, direction);
-			vector<PointXYZ> nega_branch = searchBranchByDirection(candidate.first, -1*direction);
+			vector<int> bi_1, bi_2, bi_total;
+			vector<PointXYZ> posi_branch = searchBranchByDirection(candidate.first, direction, bi_1);
+			vector<PointXYZ> nega_branch = searchBranchByDirection(candidate.first, -1*direction, bi_2);
+			bi_total.resize(bi_1.size()+ bi_2.size());
+			sort(bi_1.begin(), bi_1.end(), less<int>());
+			sort(bi_2.begin(), bi_2.end(), less<int>());
+			merge(bi_1.begin(), bi_1.end(), bi_2.begin(), bi_2.end(), bi_total.begin());
 			vector<PointXYZ> total_branch;
 			for (vector<PointXYZ>::reverse_iterator riter = nega_branch.rbegin(); 
 				 riter != nega_branch.rend(); ++riter) {
@@ -631,8 +672,11 @@ void L1median::growAllBranches()
 			}
 			// 获得两个方向拼接的骨骼后
 			if (total_branch.size() >= tracing_num) {
-				skelPtr->push_back(total_branch); 
+				//skelPtr->push_back(total_branch); 
 				// TO-DO: 获取branch下标并修改类型为branch
+				for (int bi_index : bi_total) {
+					sampleInfo[bi_index].kind = pi::Branch;
+				}
 				addNewBranch = true;
 			}
 		}

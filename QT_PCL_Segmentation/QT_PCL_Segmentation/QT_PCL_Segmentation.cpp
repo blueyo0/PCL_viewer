@@ -24,6 +24,8 @@ VTK_MODULE_INIT(vtkInteractionStyle)
 
 #include "TestMoving.h"
 #include "L1median.h"
+#include "Bayes.h"
+
 #include "GlobalDef.h"
 #include "GlobalFun.h"
 
@@ -56,6 +58,7 @@ QT_PCL_Segmentation::QT_PCL_Segmentation(QWidget *parent)
 
 	connect(ui.drawButton, SIGNAL(clicked()), this, SLOT(onL1()));
 	connect(ui.drawButton_2, SIGNAL(clicked()), this, SLOT(onMoving()));
+	connect(ui.drawButton_6, SIGNAL(clicked()), this, SLOT(onBayes()));
 
 	connect(ui.clearButton, SIGNAL(clicked()), this, SLOT(clearPointCloud()));
 	connect(ui.showButton, SIGNAL(clicked()), this, SLOT(testPCLready()));
@@ -147,6 +150,31 @@ void QT_PCL_Segmentation::onMoving()
 	//this->moveToThread(at);
 	atPtr->start();
 }
+
+//Bayes
+void QT_PCL_Segmentation::onBayes()
+{
+	if (this->originCloud->points.size() < 1) { return; }
+	if (isAlgorithmRunning) { ui.InfoText->append("an algorithm is running!\n"); return; }
+	this->isAlgorithmRunning = true;
+	updateAlgorithmState();
+	ParameterSet *para = &this->paraMgr->data[GlobalDef::L1median];
+
+	if (this->algorithm != NULL) delete this->algorithm;
+	if (this->sampleCloud->points.size() < 1) onRandomSample();
+	L1median* l1ptr = new Bayes(para, originCloud, sampleCloud, skeleton, &sampleStatus);
+	l1ptr->setSigmaPtr(&sampleSigma);
+	l1ptr->setFileName(this->cloudPath);
+	this->algorithm = l1ptr;
+
+	// slot connecting
+	connectCommonSlots();
+
+	atPtr = new AlgorithmThread(this->algorithm);
+	//this->moveToThread(at);
+	atPtr->start();
+}
+
 
 //一些简单的小功能
 void QT_PCL_Segmentation::onRandomSample() {
@@ -691,6 +719,16 @@ void QT_PCL_Segmentation::displaySampleWithSigma()
 	viewer->addPointCloud<pcl::PointXYZRGB>(colored_sample, "sample_cloud");
 	viewer->setPointCloudRenderingProperties(visualization::PCL_VISUALIZER_POINT_SIZE, 
 											 common.getInt("sample_point_size"), "sample_cloud");
+
+	// display skeleton point
+	PointCloud<PointXYZ>::Ptr branched_sample(new PointCloud<PointXYZ>);
+	for (int i = 0; i < sampleCloud->points.size(); ++i) {
+		if (sampleStatus[i] == pi::Branch || sampleStatus[i] == pi::Bridge) {
+			branched_sample->points.push_back(sampleCloud->points[i]);
+		}
+	}
+	this->displaySelectedCloud(branched_sample, { 0, 0, 200 },
+							   common.getInt("sample_point_size")*2, "branch_cloud");
 	ui.qvtkWidget->update();
 }
 
@@ -969,7 +1007,12 @@ void QT_PCL_Segmentation::connectCommonSlots()
 }
 void QT_PCL_Segmentation::displayAlgorithmInfo(const QString name)
 {
+	if (infoNum > 30) {
+		ui.InfoText->setText("");
+		infoNum = 0;
+	}
 	ui.InfoText->append("[INFO] "+name);
+	infoNum++;
 }
 void QT_PCL_Segmentation::displayAlgorithmError(const QString name)
 {

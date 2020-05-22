@@ -117,6 +117,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AlgorithmThread.cpp" />
+    <ClCompile Include="Bayes.cpp" />
     <ClCompile Include="L1median.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="QT_PCL_Segmentation.cpp" />
@@ -133,6 +134,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AlgorithmThread.h" />
+    <ClInclude Include="Bayes.h" />
     <ClInclude Include="GlobalFun.h" />
     <ClInclude Include="GlobalDef.h" />
     <QtMoc Include="PointCloudAlgorithm.h">

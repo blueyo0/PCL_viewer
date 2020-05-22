@@ -56,6 +56,7 @@ private:
 	PointCloudAlgorithm *algorithm = NULL;
 	bool isAlgorithmRunning = false;
 	vector<vector<PointXYZ>>* skeleton = new vector<vector<PointXYZ>>({});
+	PointCloud<PointXYZRGB>::Ptr segCloud;
 
 private:
 	PointCloud<PointXYZ>::Ptr originCloud;
@@ -64,6 +65,7 @@ private:
 	vector<double> sampleSigma;
 	PointCloud<PointXYZ>::Ptr cloudfiltered; 
 	PointCloud<Normal>::Ptr normalCloud;
+	int infoNum=0;
 
 	/*¿˙ ∑“≈¡Ù*/
 	string cloudPath;
@@ -101,6 +103,7 @@ private slots:
 	/*À„∑®slot*/
 	void onL1();
 	void onMoving();
+	void onBayes();
 
 	void noise();
 	void outlier();

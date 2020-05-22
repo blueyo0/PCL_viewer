@@ -51,6 +51,9 @@
     <ClCompile Include="L1median.cpp">
       <Filter>Source Files\Algorithm</Filter>
     </ClCompile>
+    <ClCompile Include="Bayes.cpp">
+      <Filter>Source Files\Algorithm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="QT_PCL_Segmentation.h">
@@ -91,6 +94,9 @@
     </ClInclude>
     <ClInclude Include="GlobalDef.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Bayes.h">
+      <Filter>Header Files\Algorithm</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

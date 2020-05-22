@@ -43,7 +43,7 @@ public:
 class L1median :
 	public PointCloudAlgorithm
 {
-private:
+protected:
 	ParameterSet* paraPtr;
 	PointCloud<PointXYZ>::Ptr sample;
 	PointCloud<PointXYZ> sample_save;
@@ -70,9 +70,9 @@ public:
 	void initalizeParam();
 	bool isSampleFixed(int);
 
-	void computeNeighbors();
-	void computeOriginNeighbors();
-	void computeSelfNeighbors();
+	inline void computeNeighbors();
+	inline void computeOriginNeighbors();
+	inline void computeSelfNeighbors();
 
 	void computeSigmas();
 	void computeAlphasTerms();
@@ -86,7 +86,7 @@ public:
 	bool updateRemovedSample();
 
 	void growAllBranches();
-	vector<PointXYZ> searchBranchByDirection(int start_index, Vector3d direction);
+	vector<PointXYZ> searchBranchByDirection(int start_index, Vector3d direction, vector<int>& branch_index);
 
 	double updateRadius();
 	bool synSampleWithInfo();
