@@ -49,6 +49,8 @@ namespace GlobalDef {
 		make_pair("over_seg_size",				50),
 		make_pair("seg_error_threshold",		0.005),
 		make_pair("max_seg_iterate_time",		50),
+		make_pair("seg_merge_iterate_time",		10),
+		make_pair("prob_tactor",				0.8),
 		/*L1主要参数*/
 		make_pair("neighborhood_size",			1.0),
 		make_pair("h_increasing_rate",			0.5),

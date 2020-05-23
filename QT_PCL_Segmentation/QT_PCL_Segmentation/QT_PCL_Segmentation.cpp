@@ -743,6 +743,7 @@ void QT_PCL_Segmentation::displaySampleWithSigma()
 
 void QT_PCL_Segmentation::onSegmentation()
 {
+	viewer->removePointCloud("cloud");
 	string tag = "seg_colored_cloud";
 	viewer->removePointCloud(tag);
 	viewer->addPointCloud(segCloud, tag);

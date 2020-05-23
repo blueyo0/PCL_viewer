@@ -106,7 +106,7 @@ public:
 
 	virtual void run();
 	virtual void iterate();
-	double iterateReturnError();
+	virtual double iterateReturnError();
 	virtual void reset();
 };
 

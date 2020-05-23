@@ -36,9 +36,12 @@ signals:
 
 protected:
 	vector<BayesInfo> originInfo;
+
+	vector<pi::RGB> clusterColor;
+	vector<int> segment_size;
+
 	PointCloud<PointXYZ>::Ptr centers;
 	PointCloud<PointXYZRGB>::Ptr segCloud;
-
 public:
 	Bayes(
 		ParameterSet*,
@@ -47,13 +50,20 @@ public:
 		vector<vector<PointXYZ>>*,
 		vector<pi::PtKind>*
 	); // para + origin + sample
-	~Bayes();
+	virtual ~Bayes();
+	double updateSamplePos();
 
 	void setCenterCloud(PointCloud<PointXYZ>::Ptr);
 	void setSegCloud(PointCloud<PointXYZRGB>::Ptr);
 
-	//void segmentation();	
 	void computeOverSeg();
+	void computeSegMerge();
+
+	double getSkelProbOfSegment(int s); 
+	double getSkelProbOfTWOSegment(int s1, int s2);
+	void mergeSegments(int s1, int s2);
+
 	virtual void run();
+	virtual double iterateReturnError();
 };
 
