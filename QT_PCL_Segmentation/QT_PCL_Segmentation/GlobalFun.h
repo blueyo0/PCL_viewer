@@ -1,4 +1,7 @@
-#pragma once
+//#pragma once
+#ifndef GLOBALFUN_H_
+#define GLOBALFUN_H_
+
 #include <vector>
 #include <algorithm>
 
@@ -21,7 +24,7 @@ using namespace Eigen;
 using namespace pcl;
 
 namespace GlobalFun {
-	void pcd_ply(std::string input) {
+	static void pcd_ply(std::string input) {
 		pcl::PCLPointCloud2 cloud;
 		if (pcl::io::loadPCDFile(input.substr(0, input.length() - 4) + ".pcd", cloud) < 0)
 		{
@@ -32,7 +35,7 @@ namespace GlobalFun {
 		writer.write(input.substr(0, input.length() - 4) + ".ply", cloud, Eigen::Vector4f::Zero(), Eigen::Quaternionf::Identity(), true, true);
 	}
 
-	void obj_pcd(std::string input) {
+	static void obj_pcd(std::string input) {
 		pcl::PolygonMesh mesh;
 		pcl::io::loadPolygonFileOBJ(input.substr(0, input.length() - 4) + ".obj", mesh);
 		pcl::PointCloud<pcl::PointXYZ>::Ptr converterCloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -40,7 +43,7 @@ namespace GlobalFun {
 		pcl::io::savePCDFileASCII(input.substr(0, input.length() - 4) + ".pcd", *converterCloud);
 	}
 
-	void off_obj(std::string input)
+	static void off_obj(std::string input)
 	{
 		/*函数说明：读取off文件*/
 		float vertex[10000][3];
@@ -119,7 +122,7 @@ namespace GlobalFun {
 	}
 
 	// 随机采样函数
-	PointCloud<PointXYZ>::Ptr randomSampling(PointCloud<PointXYZ>::Ptr inCloud, int num)
+	static PointCloud<PointXYZ>::Ptr randomSampling(PointCloud<PointXYZ>::Ptr inCloud, int num)
 	{
 		PointCloud<PointXYZ>::Ptr sampleCloud(new PointCloud<PointXYZ>);
 		int size = inCloud->points.size();
@@ -135,7 +138,7 @@ namespace GlobalFun {
 		return sampleCloud;
 	}
 
-	PointCloud<PointXYZ>::Ptr readOFF(std::string filename)
+	static PointCloud<PointXYZ>::Ptr readOFF(std::string filename)
 	{
 		PointCloud<PointXYZ>::Ptr cloud(new PointCloud<PointXYZ>);
 		ifstream in(filename);
@@ -160,7 +163,7 @@ namespace GlobalFun {
 	}
 
 
-	PointXYZ median(PointCloud<PointXYZ>::Ptr inCloud)
+	static PointXYZ median(PointCloud<PointXYZ>::Ptr inCloud)
 	{
 		pcl::PointXYZ center(0, 0, 0);
 		// Generate the data
@@ -175,7 +178,7 @@ namespace GlobalFun {
 		center.z /= inCloud->points.size();
 		return center;
 	}
-	bool isDigitString(const QString& src) {
+	static bool isDigitString(const QString& src) {
 		const string s = src.toStdString();
 		for (char c : s) {
 			if (!isdigit(c) && c!='.') {
@@ -186,9 +189,9 @@ namespace GlobalFun {
 	}
 
 	// black - blue - green - yellow - red
-	vector<pi::RGB> color_map = { {0,0,0},{0,0,255},{0,255,0},{255,255,0},{255,0,0} };
+	static vector<pi::RGB> color_map = { {0,0,0},{0,0,255},{0,255,0},{255,255,0},{255,0,0} };
 
-	pi::RGB getHotMapColor(double val) {
+	static pi::RGB getHotMapColor(double val) {
 		pi::RGB c1, c2;
 		double percent = 0.0;
 		if (val >= 0.75) {
@@ -219,6 +222,19 @@ namespace GlobalFun {
 		};
 	}
 
+	static double euclidDistance(PointXYZ p1, PointXYZ p2) {
+		return sqrt(
+			(p1.x - p2.x)*(p1.x - p2.x) +
+			(p1.y - p2.y)*(p1.y - p2.y) +
+			(p1.z - p2.z)*(p1.z - p2.z)
+		);
+	}
+
+	static pi::RGB getRandomColor() {
+
+
+
+	}
 
 	/*vector<int> BHG(PointCloud<PointXYZ>::Ptr inCloud) {
 		vector<int> res;
@@ -230,3 +246,4 @@ namespace GlobalFun {
 }
 
 
+#endif 

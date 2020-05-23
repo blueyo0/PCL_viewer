@@ -158,18 +158,27 @@ void QT_PCL_Segmentation::onBayes()
 	if (isAlgorithmRunning) { ui.InfoText->append("an algorithm is running!\n"); return; }
 	this->isAlgorithmRunning = true;
 	updateAlgorithmState();
-	ParameterSet *para = &this->paraMgr->data[GlobalDef::L1median];
+	ParameterSet *para = &this->paraMgr->data[GlobalDef::Bayes];
 
 	if (this->algorithm != NULL) delete this->algorithm;
 	if (this->sampleCloud->points.size() < 1) onRandomSample();
-	L1median* l1ptr = new Bayes(para, originCloud, sampleCloud, skeleton, &sampleStatus);
+	Bayes* l1ptr = new Bayes(para, originCloud, sampleCloud, skeleton, &sampleStatus);
 	l1ptr->setSigmaPtr(&sampleSigma);
 	l1ptr->setFileName(this->cloudPath);
+
+	centerCloud.reset(new PointCloud<PointXYZ>);
+	segCloud.reset(new PointCloud<PointXYZRGB>);
+	l1ptr->setCenterCloud(this->centerCloud);
+	l1ptr->setSegCloud(this->segCloud);
+
+	if (!connect(l1ptr, SIGNAL(segSignal()), this, SLOT(onSegmentation())))
+	{
+		ui.InfoText->append("algorithm connect wrong-code:1!");
+	}
 	this->algorithm = l1ptr;
 
 	// slot connecting
 	connectCommonSlots();
-
 	atPtr = new AlgorithmThread(this->algorithm);
 	//this->moveToThread(at);
 	atPtr->start();
@@ -731,6 +740,15 @@ void QT_PCL_Segmentation::displaySampleWithSigma()
 							   common.getInt("sample_point_size")*2, "branch_cloud");
 	ui.qvtkWidget->update();
 }
+
+void QT_PCL_Segmentation::onSegmentation()
+{
+	string tag = "seg_colored_cloud";
+	viewer->removePointCloud(tag);
+	viewer->addPointCloud(segCloud, tag);
+	ui.qvtkWidget->update();
+}
+
 
 
 void QT_PCL_Segmentation::onUpdate() 

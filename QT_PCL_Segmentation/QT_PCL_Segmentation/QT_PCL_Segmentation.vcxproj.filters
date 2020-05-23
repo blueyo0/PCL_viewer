@@ -65,6 +65,9 @@
     <QtMoc Include="TestMoving.h">
       <Filter>Header Files\Algorithm</Filter>
     </QtMoc>
+    <QtMoc Include="Bayes.h">
+      <Filter>Header Files\Algorithm</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="QT_PCL_Segmentation.ui">
@@ -94,9 +97,6 @@
     </ClInclude>
     <ClInclude Include="GlobalDef.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Bayes.h">
-      <Filter>Header Files\Algorithm</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

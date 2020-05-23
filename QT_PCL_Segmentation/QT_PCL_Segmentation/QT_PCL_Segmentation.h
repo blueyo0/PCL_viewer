@@ -57,7 +57,8 @@ private:
 	bool isAlgorithmRunning = false;
 	vector<vector<PointXYZ>>* skeleton = new vector<vector<PointXYZ>>({});
 	PointCloud<PointXYZRGB>::Ptr segCloud;
-
+	PointCloud<PointXYZ>::Ptr centerCloud;
+										  
 private:
 	PointCloud<PointXYZ>::Ptr originCloud;
 	PointCloud<PointXYZ>::Ptr sampleCloud;
@@ -113,6 +114,7 @@ private slots:
 
 	/*更新slot*/
 	void onUpdate(); // 更新sampleCloud的显示
+	void onSegmentation(); // 更新sampleCloud的显示
 	void displaySampleWithKind();
 	void displaySampleWithSigma();
 
